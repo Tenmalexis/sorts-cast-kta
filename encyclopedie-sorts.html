@@ -653,6 +653,141 @@ body::before {
   .class-btn { width: 44px; height: 44px; }
   .search-bar { width: 120px; }
 }
+
+/* ─── PAIR CARD ──────────────────────────────────── */
+.spell-pair {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all .2s;
+}
+.spell-pair:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.spell-pair.expanded { border-color: var(--gold-dim); box-shadow: 0 0 0 1px rgba(244,180,0,.15); }
+
+.pair-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.pair-spells {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.spell-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.spell-half.variant {
+  padding-left: 8px;
+  opacity: .85;
+}
+.spell-half.variant:hover { opacity: 1; }
+
+.pair-divider {
+  font-size: 14px;
+  color: var(--border2);
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+/* ─── DETAILS DOUBLE ─────────────────────────────── */
+.spell-details {
+  border-top: 1px solid var(--border);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .35s ease;
+}
+.spell-pair.expanded .spell-details { max-height: 1200px; }
+
+.details-double {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 0;
+}
+.details-col { padding: 14px 16px; }
+.details-col-title {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.details-sep { background: var(--border); }
+.main-col    { }
+.variant-col { }
+
+/* Stats mini grid */
+.detail-stats-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.stat-mini {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 38px;
+}
+.stat-mini span { font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 700; line-height: 1; }
+.stat-mini small { font-size: 9px; color: var(--muted); line-height: 1; }
+.stat-mini.hi span { color: var(--blue); }
+
+.detail-fx-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 8px 0 4px;
+}
+.effects-list { display: flex; flex-direction: column; gap: 3px; }
+.effect-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 7px;
+  background: var(--bg3);
+  border-radius: 4px;
+  font-size: 12px;
+}
+.effect-dmg {
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  min-width: 50px;
+  white-space: nowrap;
+}
+.effect-desc { color: var(--muted2); flex: 1; line-height: 1.3; }
+
+.spell-desc {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 6px 8px;
+  background: var(--bg3);
+  border-radius: 4px;
+  font-style: italic;
+}
+.no-data { padding: 12px; color: var(--muted); font-size: 12px; text-align: center; }
 </style>
 </head>
 <body>
@@ -700,69 +835,69 @@ body::before {
 <div class="tooltip" id="tooltip"></div>
 
 <script>
-// ─── CONFIG CLASSES ──────────────────────────────────────────────────────────
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const BREEDS = [
-  { id:1,  name:'Féca',       short:'Féca',   },
-  { id:2,  name:'Osamodas',   short:'Osa',    },
-  { id:3,  name:'Enutrof',    short:'Enu',    },
-  { id:4,  name:'Sram',       short:'Sram',   },
-  { id:5,  name:'Xélor',      short:'Xél',    },
-  { id:6,  name:'Ecaflip',    short:'Eca',    },
-  { id:7,  name:'Eniripsa',   short:'Eni',    },
-  { id:8,  name:'Iop',        short:'Iop',    },
-  { id:9,  name:'Crâ',        short:'Crâ',    },
-  { id:10, name:'Sadida',     short:'Sadi',   },
-  { id:11, name:'Sacrieur',   short:'Sacri',  },
-  { id:12, name:'Pandawa',    short:'Panda',  },
-  { id:13, name:'Roublard',   short:'Roub',   },
-  { id:14, name:'Zobal',      short:'Zobal',  },
-  { id:15, name:'Steamer',    short:'Steam',  },
-  { id:16, name:'Éliotrope',  short:'Élio',   },
-  { id:17, name:'Huppermage', short:'Hupp',   },
-  { id:18, name:'Ouginak',    short:'Ougi',   },
-  { id:20, name:'Forgelance', short:'Forge',  },
+  { id:1,  name:'Féca',       short:'Féca'   },
+  { id:2,  name:'Osamodas',   short:'Osa'    },
+  { id:3,  name:'Enutrof',    short:'Enu'    },
+  { id:4,  name:'Sram',       short:'Sram'   },
+  { id:5,  name:'Xélor',      short:'Xél'    },
+  { id:6,  name:'Ecaflip',    short:'Eca'    },
+  { id:7,  name:'Eniripsa',   short:'Eni'    },
+  { id:8,  name:'Iop',        short:'Iop'    },
+  { id:9,  name:'Crâ',        short:'Crâ'    },
+  { id:10, name:'Sadida',     short:'Sadi'   },
+  { id:11, name:'Sacrieur',   short:'Sacri'  },
+  { id:12, name:'Pandawa',    short:'Panda'  },
+  { id:13, name:'Roublard',   short:'Roub'   },
+  { id:14, name:'Zobal',      short:'Zobal'  },
+  { id:15, name:'Steamer',    short:'Steam'  },
+  { id:16, name:'Éliotrope',  short:'Élio'   },
+  { id:17, name:'Huppermage', short:'Hupp'   },
+  { id:18, name:'Ouginak',    short:'Ougi'   },
+  { id:20, name:'Forgelance', short:'Forge'  },
 ];
 
-// effectElement → élément
-// 0=neutre, 1=feu, 2=eau, 3=air, 4=terre, 5=neutre(alt)
-const EL_MAP = { 0:'neutre', 1:'feu', 2:'eau', 3:'air', 4:'terre', 5:'neutre' };
-const EL_COLOR = { terre:'#c8a060', feu:'#ff6b35', eau:'#4aa8d8', air:'#a8d8a8', neutre:'#b0b0c8', invoc:'#b06aff', util:'#f4b400' };
-const EL_LABEL = { terre:'Terre', feu:'Feu', eau:'Eau', air:'Air', neutre:'Neutre', invoc:'Invoc', util:'Util' };
-
-// effectId connus
-const EFFECT_ID_NAMES = {
-  100: 'Dommages', 101: 'Dommages (vol)', 81: 'Soins', 105: 'Vol de vie',
-  108: 'Perd PA', 109: 'Vol PA', 110: 'Perd PM', 111: 'Vol PM',
-  126: 'Attire', 127: 'Repousse', 128: 'Téléporte',
-  140: 'État appliqué', 132: 'Invoque',
-  91: 'Dommages indirects', 96: 'Renvoie dommages',
+const EL_MAP   = { 0:'neutre', 1:'feu', 2:'eau', 3:'air', 4:'terre', 5:'neutre' };
+const EL_COLOR = { terre:'#c8a060', feu:'#ff6b35', eau:'#4aa8d8', air:'#a8d8a8', neutre:'#b0b0c8', invoc:'#b06aff', util:'#f4b400', soin:'#39d98a' };
+const EL_LABEL = { terre:'Terre', feu:'Feu', eau:'Eau', air:'Air', neutre:'Neutre', invoc:'Invoc', util:'Util', soin:'Soin' };
+const EFFECT_NAMES = {
+  100:'Dommages', 97:'Dommages (zone)', 101:'Dommages indirects', 91:'Renvoi dommages',
+  81:'Soins', 105:'Vol de vie', 96:'Renvoi soins',
+  108:'Perd PA', 109:'Vol PA', 110:'Perd PM', 111:'Vol PM',
+  126:'Attire', 127:'Repousse', 128:'Téléporte',
+  132:'Invoque', 140:'Applique état', 950:'Retire état',
+  6:'Déplace', 202:'Modifie portée',
 };
 
 const API = 'https://api.dofusdb.fr';
-const spellCache = {};  // breedId -> [{spell, level, variant}]
+
+// Cache: breedId -> { pairs: [{main, variant}], levels: {spellId: levelObj} }
+const cache = {};
 
 let activeBreeds = [];
-let activeBreed = null;
-let mode = 'single';
-let activeFilters = new Set(['terre','feu','eau','air','invoc','util','neutre']);
-let searchQuery = '';
+let activeBreed  = null;
+let mode         = 'single';
+let activeFilters = new Set(['terre','feu','eau','air','invoc','util','neutre','soin']);
+let searchQuery  = '';
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-function init() { renderSidebar(); }
+function init() {
+  renderSidebar();
+}
 
 function renderSidebar() {
   const sb = document.getElementById('sidebar');
   sb.innerHTML = '<div class="sidebar-logo">KTA</div>';
-  BREEDS.forEach(breed => {
+  BREEDS.forEach(b => {
     const btn = document.createElement('button');
     btn.className = 'class-btn';
-    btn.title = breed.name;
-    btn.dataset.id = breed.id;
-    btn.innerHTML = `<span class="class-label">${breed.short}</span>`;
-    btn.addEventListener('click', () => onClassClick(breed));
+    btn.dataset.id = b.id;
+    btn.title = b.name;
+    btn.innerHTML = `<span class="class-label">${b.short}</span>`;
+    btn.addEventListener('click', () => onClassClick(b));
     sb.appendChild(btn);
   });
-  // Charger les icônes breed depuis API
   loadBreedIcons();
 }
 
@@ -770,78 +905,61 @@ async function loadBreedIcons() {
   try {
     const r = await fetch(`${API}/breeds?lang=fr&$limit=25`);
     const d = await r.json();
-    (d.data || []).forEach(b => {
+    (d.data||[]).forEach(b => {
       const btn = document.querySelector(`.class-btn[data-id="${b.id}"]`);
       if (!btn) return;
-      const iconUrl = b.img || (b.iconId ? `${API}/img/${b.iconId}.png` : null);
-      if (iconUrl) {
-        btn.innerHTML = `
-          <img src="${iconUrl}" alt="${b.name && b.name.fr || ''}" onerror="this.style.display='none'">
-          <span class="class-label">${b.name && b.name.fr ? b.name.fr.slice(0,5) : btn.querySelector('.class-label').textContent}</span>
-        `;
-      }
+      const url = b.img || (b.iconId ? `${API}/img/${b.iconId}.png` : null);
+      const name = b.name?.fr || '';
+      if (url) btn.innerHTML = `<img src="${url}" alt="${name}" onerror="this.style.display='none'"><span class="class-label">${name.slice(0,5)}</span>`;
     });
-  } catch(e) { /* silencieux */ }
+  } catch(e) {}
 }
 
 // ─── FETCH ────────────────────────────────────────────────────────────────────
-async function fetchSpells(breedId) {
-  if (spellCache[breedId]) return spellCache[breedId];
+async function fetchBreed(breedId) {
+  if (cache[breedId]) return cache[breedId];
 
-  try {
-    // 1. Fetch spell-levels par spellBreed (c'est le champ qui contient l'ID de classe)
-    const r1 = await fetch(`${API}/spell-levels?spellBreed=${breedId}&lang=fr&$limit=200`);
-    const d1 = await r1.json();
-    const levels = d1.data || [];
+  // 1. Fetch spell-variants (contient sort principal + variante + spells embedded)
+  const rv = await fetch(`${API}/spell-variants?breedId=${breedId}&lang=fr&$limit=100`);
+  const dv = await rv.json();
+  const variants = dv.data || [];
 
-    if (!levels.length) {
-      spellCache[breedId] = [];
-      return [];
-    }
+  // 2. Construire les paires {main, variant}
+  // Chaque variant a spells[] avec 2 sorts (ou 1 si pas de variante)
+  // Le "principal" = typeId == breedId, la "variante" = typeId != breedId
+  const pairs = variants.map(v => {
+    const spells = v.spells || [];
+    const main    = spells.find(s => s.typeId === breedId) || spells[0];
+    const variant = spells.find(s => s !== main) || null;
+    return { main, variant };
+  }).filter(p => p.main);
 
-    // 2. Récupérer les spellIds uniques depuis les levels
-    const spellIds = [...new Set(levels.map(l => l.spellId).filter(Boolean))];
+  // Trier par order du sort principal
+  pairs.sort((a, b) => (a.main.order||0) - (b.main.order||0));
 
-    // 3. Fetch les sorts correspondants par batch
-    let spells = [];
-    for (let i = 0; i < spellIds.length; i += 40) {
-      const chunk = spellIds.slice(i, i+40);
-      const param = chunk.map(id => `id[$in][]=${id}`).join('&');
-      const r2 = await fetch(`${API}/spells?${param}&lang=fr&$limit=50`);
-      const d2 = await r2.json();
-      spells.push(...(d2.data || []));
-    }
+  // 3. Collecter tous les spellLevelIds nécessaires (dernier grade de chaque sort)
+  const allSpells = pairs.flatMap(p => [p.main, p.variant].filter(Boolean));
+  const levelIds  = allSpells.flatMap(s => {
+    const ls = s.spellLevels || [];
+    return ls.length ? [ls[ls.length - 1]] : [];
+  });
+  const uniqueLevelIds = [...new Set(levelIds)];
 
-    // 4. Pour chaque sort, garder uniquement le level de grade le plus élevé (grade max)
-    const levelBySpell = {};
-    levels.forEach(lv => {
-      const sid = lv.spellId;
-      if (!levelBySpell[sid] || lv.grade > levelBySpell[sid].grade) {
-        levelBySpell[sid] = lv;
-      }
-    });
-
-    // 5. Associer sort + level + détecter variantes
-    // Les variantes : sorts du même breedId avec même "order" groupé — on les gère via spell.id
-    // On trie par order
-    spells.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-    const result = spells.map(spell => ({
-      spell,
-      level: levelBySpell[spell.id] || null,
-    }));
-
-    spellCache[breedId] = result;
-    return result;
-
-  } catch(e) {
-    console.error('fetchSpells', breedId, e);
-    spellCache[breedId] = [];
-    return [];
+  // 4. Batch fetch spell-levels
+  const levels = {};
+  for (let i = 0; i < uniqueLevelIds.length; i += 40) {
+    const chunk = uniqueLevelIds.slice(i, i+40);
+    const param = chunk.map(id => `id[$in][]=${id}`).join('&');
+    const rl = await fetch(`${API}/spell-levels?${param}&lang=fr&$limit=50`);
+    const dl = await rl.json();
+    (dl.data||[]).forEach(lv => { levels[lv.spellId] = lv; });
   }
+
+  cache[breedId] = { pairs, levels };
+  return cache[breedId];
 }
 
-// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+// ─── NAV ──────────────────────────────────────────────────────────────────────
 function onClassClick(breed) {
   if (mode === 'single') {
     activeBreed = breed;
@@ -888,15 +1006,15 @@ function filterSpells() {
 }
 
 function applyFilters() {
-  document.querySelectorAll('.spell-card').forEach(card => {
-    const els = (card.dataset.elements || '').split(',').filter(Boolean);
+  document.querySelectorAll('.spell-pair').forEach(card => {
+    const els  = (card.dataset.elements||'').split(',').filter(Boolean);
     const name = card.dataset.name || '';
-    const elOk = els.length === 0 || els.some(e => activeFilters.has(e));
+    const elOk   = els.length === 0 || els.some(e => activeFilters.has(e));
     const srchOk = !searchQuery || name.includes(searchQuery);
     card.style.display = elOk && srchOk ? '' : 'none';
   });
   document.querySelectorAll('.class-section').forEach(sec => {
-    const vis = [...sec.querySelectorAll('.spell-card')].some(c => c.style.display !== 'none');
+    const vis = [...sec.querySelectorAll('.spell-pair')].some(c => c.style.display !== 'none');
     sec.style.display = vis ? '' : 'none';
   });
 }
@@ -907,13 +1025,13 @@ async function loadAndRenderSingle(breed) {
   document.getElementById('topbarTitle').textContent = breed.name.toUpperCase();
   document.getElementById('topbarSub').textContent = 'Chargement…';
   showLoading();
-  const entries = await fetchSpells(breed.id);
-  document.getElementById('topbarSub').textContent = `${entries.length} sorts — cliquer pour détails`;
+  const data = await fetchBreed(breed.id);
+  document.getElementById('topbarSub').textContent = `${data.pairs.length} sorts — cliquer pour détails`;
   const content = document.getElementById('content');
   content.innerHTML = '';
   const grid = document.createElement('div');
   grid.className = 'spells-grid';
-  entries.forEach(e => grid.appendChild(buildSpellCard(e.spell, e.level)));
+  data.pairs.forEach(p => grid.appendChild(buildPairCard(p, data.levels)));
   content.appendChild(grid);
   applyFilters();
 }
@@ -923,7 +1041,7 @@ async function loadAndRenderMulti() {
   document.getElementById('topbarTitle').textContent = 'MULTI — KTA';
   document.getElementById('topbarSub').textContent = activeBreeds.map(b => b.name).join(' · ');
   showLoading();
-  await Promise.all(activeBreeds.map(b => fetchSpells(b.id)));
+  await Promise.all(activeBreeds.map(b => fetchBreed(b.id)));
   const content = document.getElementById('content');
   content.innerHTML = '';
 
@@ -938,17 +1056,17 @@ async function loadAndRenderMulti() {
   content.appendChild(hdr);
 
   activeBreeds.forEach(breed => {
-    const entries = spellCache[breed.id] || [];
+    const data = cache[breed.id] || { pairs:[], levels:{} };
     const sec = document.createElement('div');
     sec.className = 'class-section';
     sec.dataset.breedId = breed.id;
     sec.innerHTML = `<div class="class-section-title">
       <h2>${breed.name}</h2>
-      <span class="spell-count">${entries.length} sorts</span>
+      <span class="spell-count">${data.pairs.length} sorts</span>
     </div>`;
     const grid = document.createElement('div');
     grid.className = 'spells-grid';
-    entries.forEach(e => grid.appendChild(buildSpellCard(e.spell, e.level)));
+    data.pairs.forEach(p => grid.appendChild(buildPairCard(p, data.levels)));
     sec.appendChild(grid);
     content.appendChild(sec);
   });
@@ -961,50 +1079,87 @@ function removeFromMulti(breedId) {
   activeBreeds.length ? loadAndRenderMulti() : showEmpty('Mode Multi — sélectionne des classes');
 }
 
-// ─── CARD ─────────────────────────────────────────────────────────────────────
-function buildSpellCard(spell, level) {
-  const name = spell.name?.fr || '?';
-  const iconUrl = spell.img || `${API}/img/spells/sort_${spell.iconId || 0}.png`;
+// ─── PAIR CARD (sort + variante côte à côte) ──────────────────────────────────
+function buildPairCard(pair, levels) {
+  const { main, variant } = pair;
+  const mainLvl = levels[main.id] || null;
+  const varLvl  = variant ? (levels[variant.id] || null) : null;
 
-  const pa    = level?.apCost ?? '?';
-  const poMin = level?.minRange ?? 1;
-  const poMax = level?.range ?? '?';
-  const cc    = level?.criticalHitProbability || null;
+  const elements = detectElements(mainLvl);
+  const allNames = [main.name?.fr, variant?.name?.fr].filter(Boolean).join(' / ').toLowerCase();
 
-  const elements = detectElements(level);
   const card = document.createElement('div');
-  card.className = 'spell-card';
-  card.dataset.name = name.toLowerCase();
+  card.className = 'spell-pair';
+  card.dataset.name     = allNames;
   card.dataset.elements = elements.join(',');
 
-  const poStr = (poMin === poMax || poMin <= 1 && poMax === 1) ? poMax : `${poMin}-${poMax}`;
+  const mainHtml    = buildSpellHalf(main, mainLvl, 'main');
+  const variantHtml = variant
+    ? `<div class="pair-divider">⟷</div>${buildSpellHalf(variant, varLvl, 'variant')}`
+    : '';
 
   card.innerHTML = `
-    <div class="spell-card-header" onclick="toggleCard(this.parentElement)">
-      <img class="spell-icon" src="${iconUrl}" alt="${name}" onerror="this.src='${API}/img/spells/sort_0.png'">
-      <div class="spell-meta">
-        <div class="spell-name">${name}</div>
-        <div class="spell-tags">
-          ${elements.map(e => `<span class="tag tag-${e}">${EL_LABEL[e]||e}</span>`).join('')}
-        </div>
-      </div>
-      <div class="spell-quick-stats">
-        <div class="qs-item"><span class="qs-val pa">${pa}</span><span class="qs-label">PA</span></div>
-        <div class="qs-item"><span class="qs-val po">${poStr}</span><span class="qs-label">PO</span></div>
-        ${cc ? `<div class="qs-item"><span class="qs-val cc">${cc}%</span><span class="qs-label">CC</span></div>` : ''}
-      </div>
+    <div class="pair-header" onclick="togglePair(this.parentElement)">
+      <div class="pair-spells">${mainHtml}${variantHtml}</div>
       <span class="expand-arrow">▼</span>
     </div>
-    <div class="spell-details">${buildDetails(spell, level)}</div>
+    <div class="spell-details">
+      ${buildDetailsDouble(main, mainLvl, variant, varLvl)}
+    </div>
   `;
   return card;
 }
 
-function toggleCard(card) { card.classList.toggle('expanded'); }
+function buildSpellHalf(spell, lvl, role) {
+  const name = spell.name?.fr || '?';
+  const icon = spell.img || `${API}/img/spells/sort_0.png`;
+  const pa   = lvl?.apCost ?? '?';
+  const poMin = lvl?.minRange ?? 1;
+  const poMax = lvl?.range ?? '?';
+  const cc   = lvl?.criticalHitProbability || null;
+  const poStr = (poMin <= 1 && poMax === 1) ? `${poMax}` : `${poMin}-${poMax}`;
+  const elements = detectElements(lvl);
 
-// ─── DETAILS ──────────────────────────────────────────────────────────────────
-function buildDetails(spell, lvl) {
-  if (!lvl) return `<div style="padding:12px;color:var(--muted);font-size:12px">Pas de données disponibles</div>`;
+  return `<div class="spell-half ${role}">
+    <img class="spell-icon" src="${icon}" alt="${name}" onerror="this.src='${API}/img/spells/sort_0.png'">
+    <div class="spell-meta">
+      <div class="spell-name">${name}</div>
+      <div class="spell-tags">
+        ${elements.map(e => `<span class="tag tag-${e}">${EL_LABEL[e]||e}</span>`).join('')}
+      </div>
+    </div>
+    <div class="spell-quick-stats">
+      <div class="qs-item"><span class="qs-val pa">${pa}</span><span class="qs-label">PA</span></div>
+      <div class="qs-item"><span class="qs-val po">${poStr}</span><span class="qs-label">PO</span></div>
+      ${cc ? `<div class="qs-item"><span class="qs-val cc">${cc}%</span><span class="qs-label">CC</span></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function togglePair(card) { card.classList.toggle('expanded'); }
+
+// ─── DETAILS DOUBLE (sort principal + variante en colonnes) ───────────────────
+function buildDetailsDouble(main, mainLvl, variant, varLvl) {
+  const mainDetail    = buildSpellDetail(main, mainLvl);
+  const variantDetail = variant ? buildSpellDetail(variant, varLvl) : '';
+
+  if (!variant) return mainDetail;
+
+  return `<div class="details-double">
+    <div class="details-col main-col">
+      <div class="details-col-title" style="color:var(--blue)">${main.name?.fr}</div>
+      ${mainDetail}
+    </div>
+    <div class="details-sep"></div>
+    <div class="details-col variant-col">
+      <div class="details-col-title" style="color:var(--gold)">${variant.name?.fr}</div>
+      ${variantDetail}
+    </div>
+  </div>`;
+}
+
+function buildSpellDetail(spell, lvl) {
+  if (!lvl) return `<div class="no-data">Données indisponibles</div>`;
 
   const pa      = lvl.apCost ?? '?';
   const poMin   = lvl.minRange ?? 1;
@@ -1014,107 +1169,76 @@ function buildDetails(spell, lvl) {
   const linear  = lvl.castInLine;
   const modPO   = lvl.rangeCanBeBoosted;
   const perTurn = lvl.maxCastPerTurn;
-  const perTgt  = lvl.maxCastPerTarget;
   const cd      = lvl.minCastInterval;
-  const initCd  = lvl.initialCooldown;
 
   const stats = [
-    { val: pa,   label: 'Coût PA',    hi: true },
-    { val: `${poMin}→${poMax}`, label: 'Portée' },
-    cc  ? { val: cc+'%', label: 'Taux CC' } : null,
-    los !== undefined ? { val: los ? '✓' : '✗', label: 'LdV' } : null,
-    linear ? { val: '✓', label: 'En ligne' } : null,
-    modPO ? { val: '✓', label: 'PO modif.' } : null,
-    perTurn > 0  ? { val: perTurn,  label: '/tour' } : null,
-    perTgt  > 0  ? { val: perTgt,   label: '/cible' } : null,
-    cd      > 0  ? { val: cd,       label: 'Relance' } : null,
-    initCd  > 0  ? { val: initCd,   label: 'CD init.' } : null,
+    { val: pa,                   label: 'PA',      hi: true },
+    { val: `${poMin}→${poMax}`,  label: 'PO' },
+    cc      ? { val: cc+'%',   label: 'CC' }    : null,
+    los     ? { val: '✓',      label: 'LdV' }   : { val: '✗', label: 'LdV' },
+    linear  ? { val: '✓',      label: 'Ligne' } : null,
+    modPO   ? { val: '✓',      label: 'PO+' }   : null,
+    perTurn > 0 ? { val: perTurn, label: '/tour' } : null,
+    cd      > 0 ? { val: cd,     label: 'CD' }    : null,
   ].filter(Boolean);
 
-  const statsHtml = `
-    <div class="detail-section">
-      <div class="detail-title">Statistiques</div>
-      <div class="stats-grid">
-        ${stats.map(s => `<div class="stat-box">
-          <span class="stat-box-val ${s.hi?'highlight':''}">${s.val}</span>
-          <span class="stat-box-label">${s.label}</span>
-        </div>`).join('')}
-      </div>
-    </div>`;
-
-  // Effets normaux
-  const effects = lvl.effects || [];
+  const effects   = lvl.effects || [];
   const ccEffects = lvl.criticalEffect || [];
+  const visibleFx   = effects.filter(e => e.visibleInTooltip !== false && e.diceNum > 0);
+  const visibleCCFx = ccEffects.filter(e => e.visibleInTooltip !== false && e.diceNum > 0);
 
-  const fxHtml = effects.length ? `
-    <div class="detail-section">
-      <div class="detail-title">Effets</div>
-      <div class="effects-list">${effects.map(e => buildEffectRow(e)).join('')}</div>
-    </div>` : '';
-
-  const ccFxHtml = ccEffects.length ? `
-    <div class="detail-section">
-      <div class="detail-title">⚡ Critique</div>
-      <div class="effects-list">${ccEffects.map(e => buildEffectRow(e, true)).join('')}</div>
-    </div>` : '';
-
-  // Description
   const desc = spell.description?.fr || '';
-  const descHtml = desc ? `
-    <div class="detail-section">
-      <div class="detail-title">Description</div>
-      <div style="font-size:12px;color:var(--muted2);line-height:1.5;padding:7px 10px;background:var(--bg3);border-radius:5px">${desc}</div>
-    </div>` : '';
 
-  return statsHtml + fxHtml + ccFxHtml + descHtml;
+  return `
+    <div class="detail-stats-mini">
+      ${stats.map(s => `<div class="stat-mini ${s.hi?'hi':''}"><span>${s.val}</span><small>${s.label}</small></div>`).join('')}
+    </div>
+    ${visibleFx.length ? `
+      <div class="detail-fx-title">Effets</div>
+      <div class="effects-list">${visibleFx.map(e => buildEffectRow(e)).join('')}</div>
+    ` : ''}
+    ${visibleCCFx.length ? `
+      <div class="detail-fx-title">⚡ Critique</div>
+      <div class="effects-list">${visibleCCFx.map(e => buildEffectRow(e, true)).join('')}</div>
+    ` : ''}
+    ${desc ? `<div class="spell-desc">${desc}</div>` : ''}
+  `;
 }
 
-function buildEffectRow(fx, isCrit = false) {
-  // diceNum→diceSide = min→max dommages
-  const min = fx.diceNum ?? 0;
-  const max = fx.diceSide ?? 0;
-  const el  = EL_MAP[fx.effectElement] || 'neutre';
-  const effectName = EFFECT_ID_NAMES[fx.effectId] || `Effet ${fx.effectId}`;
-
-  // Affichage dommages
-  let dmgStr = '';
-  if (min > 0 || max > 0) {
-    dmgStr = min === max ? `${min}` : `${min}→${max}`;
-  }
-
-  const isDmg = [100,101,81,105,91,96].includes(fx.effectId);
+function buildEffectRow(fx) {
+  const min  = fx.diceNum ?? 0;
+  const max  = fx.diceSide ?? 0;
+  const el   = EL_MAP[fx.effectElement] || 'neutre';
+  const name = EFFECT_NAMES[fx.effectId] || `Effet ${fx.effectId}`;
+  const isDmg = [100,97,101,91,96,81,105].includes(fx.effectId);
   const isSoin = fx.effectId === 81;
-  const rowCls = isDmg ? `dmg-${isSoin ? 'soin' : el}` : 'effect-special';
-  const dmgCls = isSoin ? 'soin' : (isDmg ? el : '');
-  const color = isSoin ? 'var(--green)' : (EL_COLOR[el] || 'var(--muted2)');
+  const elKey = isSoin ? 'soin' : el;
+  const color = EL_COLOR[isDmg ? elKey : 'util'] || 'var(--muted2)';
+  const dmgStr = max > 0 ? (min === max ? `${min}` : `${min}→${max}`) : (min > 0 ? `${min}` : '');
 
-  return `<div class="effect-row ${rowCls}">
-    ${dmgStr ? `<span class="effect-dmg" style="color:${color}">${dmgStr}</span>` : '<span class="effect-dmg" style="color:var(--muted)">—</span>'}
-    <span class="effect-desc">${effectName}${isDmg && el !== 'neutre' ? ` <span style="color:${color};font-size:10px">(${EL_LABEL[el]})</span>` : ''}</span>
+  return `<div class="effect-row">
+    <span class="effect-dmg" style="color:${color}">${dmgStr || '—'}</span>
+    <span class="effect-desc">${name}${isDmg && el !== 'neutre' && !isSoin ? ` <em style="color:${color};font-size:10px">${EL_LABEL[el]}</em>` : ''}</span>
   </div>`;
 }
 
-// ─── DÉTECTION ÉLÉMENTS ───────────────────────────────────────────────────────
-function detectElements(level) {
-  if (!level) return ['util'];
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function detectElements(lvl) {
+  if (!lvl) return ['util'];
   const els = new Set();
-  const allFx = [...(level.effects || []), ...(level.criticalEffect || [])];
-
+  const allFx = [...(lvl.effects||[]), ...(lvl.criticalEffect||[])];
   allFx.forEach(fx => {
-    if ([100,101,105,91,96].includes(fx.effectId)) {
-      // Sort offensif → élément
+    if ([100,97,101,91,96,105].includes(fx.effectId) && fx.diceNum > 0) {
       const el = EL_MAP[fx.effectElement];
       if (el) els.add(el);
     }
-    if (fx.effectId === 81) els.add('soin'); // soins → on map sur eau visuellement
+    if (fx.effectId === 81  && fx.diceNum > 0) els.add('soin');
     if (fx.effectId === 132) els.add('invoc');
   });
-
   if (els.size === 0) els.add('util');
   return [...els];
 }
 
-// ─── UI ───────────────────────────────────────────────────────────────────────
 function showEmpty(msg = 'Clique sur une classe pour afficher ses sorts') {
   document.getElementById('content').innerHTML = `
     <div class="empty-state">
@@ -1129,7 +1253,7 @@ function showLoading() {
   document.getElementById('content').innerHTML = `
     <div class="loading-state">
       <div class="loading-ring"></div>
-      <div class="loading-text">Chargement des sorts…</div>
+      <div class="loading-text">Chargement…</div>
     </div>`;
 }
 
