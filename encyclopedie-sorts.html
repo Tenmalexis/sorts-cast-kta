@@ -700,134 +700,185 @@ body::before {
 <div class="tooltip" id="tooltip"></div>
 
 <script>
-// ─── CONFIG CLASSES ────────────────────────────────────────────────────────────
+// ─── CONFIG CLASSES ──────────────────────────────────────────────────────────
 const BREEDS = [
-  { id:1,  name:'Féca',       short:'Féca',   img:'https://api.dofusdb.fr/img/7366.png' },
-  { id:2,  name:'Osamodas',   short:'Osa',    img:'https://api.dofusdb.fr/img/7367.png' },
-  { id:3,  name:'Enutrof',    short:'Enu',    img:'https://api.dofusdb.fr/img/7368.png' },
-  { id:4,  name:'Sram',       short:'Sram',   img:'https://api.dofusdb.fr/img/7369.png' },
-  { id:5,  name:'Xélor',      short:'Xél',    img:'https://api.dofusdb.fr/img/7370.png' },
-  { id:6,  name:'Ecaflip',    short:'Eca',    img:'https://api.dofusdb.fr/img/7371.png' },
-  { id:7,  name:'Eniripsa',   short:'Eni',    img:'https://api.dofusdb.fr/img/7372.png' },
-  { id:8,  name:'Iop',        short:'Iop',    img:'https://api.dofusdb.fr/img/7373.png' },
-  { id:9,  name:'Crâ',        short:'Crâ',    img:'https://api.dofusdb.fr/img/7374.png' },
-  { id:10, name:'Sadida',     short:'Sadi',   img:'https://api.dofusdb.fr/img/7375.png' },
-  { id:11, name:'Sacrieur',   short:'Sacri',  img:'https://api.dofusdb.fr/img/7376.png' },
-  { id:12, name:'Pandawa',    short:'Panda',  img:'https://api.dofusdb.fr/img/7377.png' },
-  { id:13, name:'Roublard',   short:'Roub',   img:'https://api.dofusdb.fr/img/7378.png' },
-  { id:14, name:'Zobal',      short:'Zobal',  img:'https://api.dofusdb.fr/img/7379.png' },
-  { id:15, name:'Steamer',    short:'Steam',  img:'https://api.dofusdb.fr/img/7380.png' },
-  { id:16, name:'Éliotrope',  short:'Élio',   img:'https://api.dofusdb.fr/img/7381.png' },
-  { id:17, name:'Huppermage', short:'Hupp',   img:'https://api.dofusdb.fr/img/7382.png' },
-  { id:18, name:'Ouginak',    short:'Ougi',   img:'https://api.dofusdb.fr/img/7383.png' },
-  { id:20, name:'Forgelance', short:'Forge',  img:'https://api.dofusdb.fr/img/7384.png' },
+  { id:1,  name:'Féca',       short:'Féca',   },
+  { id:2,  name:'Osamodas',   short:'Osa',    },
+  { id:3,  name:'Enutrof',    short:'Enu',    },
+  { id:4,  name:'Sram',       short:'Sram',   },
+  { id:5,  name:'Xélor',      short:'Xél',    },
+  { id:6,  name:'Ecaflip',    short:'Eca',    },
+  { id:7,  name:'Eniripsa',   short:'Eni',    },
+  { id:8,  name:'Iop',        short:'Iop',    },
+  { id:9,  name:'Crâ',        short:'Crâ',    },
+  { id:10, name:'Sadida',     short:'Sadi',   },
+  { id:11, name:'Sacrieur',   short:'Sacri',  },
+  { id:12, name:'Pandawa',    short:'Panda',  },
+  { id:13, name:'Roublard',   short:'Roub',   },
+  { id:14, name:'Zobal',      short:'Zobal',  },
+  { id:15, name:'Steamer',    short:'Steam',  },
+  { id:16, name:'Éliotrope',  short:'Élio',   },
+  { id:17, name:'Huppermage', short:'Hupp',   },
+  { id:18, name:'Ouginak',    short:'Ougi',   },
+  { id:20, name:'Forgelance', short:'Forge',  },
 ];
 
+// effectElement → élément
+// 0=neutre, 1=feu, 2=eau, 3=air, 4=terre, 5=neutre(alt)
+const EL_MAP = { 0:'neutre', 1:'feu', 2:'eau', 3:'air', 4:'terre', 5:'neutre' };
+const EL_COLOR = { terre:'#c8a060', feu:'#ff6b35', eau:'#4aa8d8', air:'#a8d8a8', neutre:'#b0b0c8', invoc:'#b06aff', util:'#f4b400' };
+const EL_LABEL = { terre:'Terre', feu:'Feu', eau:'Eau', air:'Air', neutre:'Neutre', invoc:'Invoc', util:'Util' };
+
+// effectId connus
+const EFFECT_ID_NAMES = {
+  100: 'Dommages', 101: 'Dommages (vol)', 81: 'Soins', 105: 'Vol de vie',
+  108: 'Perd PA', 109: 'Vol PA', 110: 'Perd PM', 111: 'Vol PM',
+  126: 'Attire', 127: 'Repousse', 128: 'Téléporte',
+  140: 'État appliqué', 132: 'Invoque',
+  91: 'Dommages indirects', 96: 'Renvoie dommages',
+};
+
 const API = 'https://api.dofusdb.fr';
+const spellCache = {};  // breedId -> [{spell, level, variant}]
 
-// Cache des spells par breedId
-const spellCache = {};
-
-// État
-let activeBreeds = [];   // mode multi
-let activeBreed = null;  // mode single
-let mode = 'single';     // 'single' | 'multi'
-let activeFilters = new Set(['terre','feu','eau','air','invoc','util']);
+let activeBreeds = [];
+let activeBreed = null;
+let mode = 'single';
+let activeFilters = new Set(['terre','feu','eau','air','invoc','util','neutre']);
 let searchQuery = '';
 
-// ─── INIT ──────────────────────────────────────────────────────────────────────
-function init() {
-  renderSidebar();
-}
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() { renderSidebar(); }
 
 function renderSidebar() {
   const sb = document.getElementById('sidebar');
-  // Garde le logo
-  const logo = sb.querySelector('.sidebar-logo');
-  sb.innerHTML = '';
-  if (logo) sb.appendChild(logo);
-
+  sb.innerHTML = '<div class="sidebar-logo">KTA</div>';
   BREEDS.forEach(breed => {
     const btn = document.createElement('button');
     btn.className = 'class-btn';
     btn.title = breed.name;
     btn.dataset.id = breed.id;
-
-    // Tente l'image, fallback sur initiales
-    btn.innerHTML = `
-      <img src="${breed.img}" alt="${breed.name}"
-        onerror="this.style.display='none';this.nextSibling.style.display='flex'"
-        style="display:block">
-      <span class="slot-emoji" style="display:none;font-size:16px;color:var(--gold);">${breed.short.slice(0,2)}</span>
-      <span class="class-label">${breed.short}</span>
-    `;
+    btn.innerHTML = `<span class="class-label">${breed.short}</span>`;
     btn.addEventListener('click', () => onClassClick(breed));
     sb.appendChild(btn);
   });
+  // Charger les icônes breed depuis API
+  loadBreedIcons();
 }
 
-// ─── INTERACTIONS ──────────────────────────────────────────────────────────────
+async function loadBreedIcons() {
+  try {
+    const r = await fetch(`${API}/breeds?lang=fr&$limit=25`);
+    const d = await r.json();
+    (d.data || []).forEach(b => {
+      const btn = document.querySelector(`.class-btn[data-id="${b.id}"]`);
+      if (!btn) return;
+      const iconUrl = b.img || (b.iconId ? `${API}/img/${b.iconId}.png` : null);
+      if (iconUrl) {
+        btn.innerHTML = `
+          <img src="${iconUrl}" alt="${b.name && b.name.fr || ''}" onerror="this.style.display='none'">
+          <span class="class-label">${b.name && b.name.fr ? b.name.fr.slice(0,5) : btn.querySelector('.class-label').textContent}</span>
+        `;
+      }
+    });
+  } catch(e) { /* silencieux */ }
+}
+
+// ─── FETCH ────────────────────────────────────────────────────────────────────
+async function fetchSpells(breedId) {
+  if (spellCache[breedId]) return spellCache[breedId];
+
+  try {
+    // 1. Fetch spell-levels par spellBreed (c'est le champ qui contient l'ID de classe)
+    const r1 = await fetch(`${API}/spell-levels?spellBreed=${breedId}&lang=fr&$limit=200`);
+    const d1 = await r1.json();
+    const levels = d1.data || [];
+
+    if (!levels.length) {
+      spellCache[breedId] = [];
+      return [];
+    }
+
+    // 2. Récupérer les spellIds uniques depuis les levels
+    const spellIds = [...new Set(levels.map(l => l.spellId).filter(Boolean))];
+
+    // 3. Fetch les sorts correspondants par batch
+    let spells = [];
+    for (let i = 0; i < spellIds.length; i += 40) {
+      const chunk = spellIds.slice(i, i+40);
+      const param = chunk.map(id => `id[$in][]=${id}`).join('&');
+      const r2 = await fetch(`${API}/spells?${param}&lang=fr&$limit=50`);
+      const d2 = await r2.json();
+      spells.push(...(d2.data || []));
+    }
+
+    // 4. Pour chaque sort, garder uniquement le level de grade le plus élevé (grade max)
+    const levelBySpell = {};
+    levels.forEach(lv => {
+      const sid = lv.spellId;
+      if (!levelBySpell[sid] || lv.grade > levelBySpell[sid].grade) {
+        levelBySpell[sid] = lv;
+      }
+    });
+
+    // 5. Associer sort + level + détecter variantes
+    // Les variantes : sorts du même breedId avec même "order" groupé — on les gère via spell.id
+    // On trie par order
+    spells.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    const result = spells.map(spell => ({
+      spell,
+      level: levelBySpell[spell.id] || null,
+    }));
+
+    spellCache[breedId] = result;
+    return result;
+
+  } catch(e) {
+    console.error('fetchSpells', breedId, e);
+    spellCache[breedId] = [];
+    return [];
+  }
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
 function onClassClick(breed) {
   if (mode === 'single') {
     activeBreed = breed;
-    // Update sidebar
-    document.querySelectorAll('.class-btn').forEach(b => {
-      b.classList.toggle('active', Number(b.dataset.id) === breed.id);
-    });
+    document.querySelectorAll('.class-btn').forEach(b =>
+      b.classList.toggle('active', Number(b.dataset.id) === breed.id));
     loadAndRenderSingle(breed);
   } else {
-    // Mode multi : toggle
     const idx = activeBreeds.findIndex(b => b.id === breed.id);
-    if (idx >= 0) {
-      activeBreeds.splice(idx, 1);
-    } else {
-      if (activeBreeds.length >= 6) {
-        // max 6 classes en multi
-        activeBreeds.shift();
-      }
-      activeBreeds.push(breed);
-    }
-    document.querySelectorAll('.class-btn').forEach(b => {
-      b.classList.toggle('active', activeBreeds.some(ab => ab.id === Number(b.dataset.id)));
-    });
-    if (activeBreeds.length === 0) {
-      showEmpty();
-    } else {
-      loadAndRenderMulti();
-    }
+    if (idx >= 0) activeBreeds.splice(idx, 1);
+    else { if (activeBreeds.length >= 6) activeBreeds.shift(); activeBreeds.push(breed); }
+    document.querySelectorAll('.class-btn').forEach(b =>
+      b.classList.toggle('active', activeBreeds.some(ab => ab.id === Number(b.dataset.id))));
+    activeBreeds.length ? loadAndRenderMulti() : showEmpty();
   }
 }
 
 function setMode(m) {
   mode = m;
   document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
-
   if (m === 'single') {
-    // Reprend la première classe active si dispo
     document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
     activeBreeds = [];
     if (activeBreed) {
       document.querySelector(`.class-btn[data-id="${activeBreed.id}"]`)?.classList.add('active');
       loadAndRenderSingle(activeBreed);
-    } else {
-      showEmpty();
-    }
+    } else showEmpty();
   } else {
     document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
     activeBreed = null;
-    showEmpty('Mode Multi actif — sélectionne jusqu\'à 6 classes (ex: team KTA 3v3)');
+    showEmpty('Mode Multi — sélectionne jusqu\'à 6 classes');
   }
 }
 
 function toggleEl(btn) {
   const el = btn.dataset.el;
-  if (activeFilters.has(el)) {
-    activeFilters.delete(el);
-    btn.classList.remove('active');
-  } else {
-    activeFilters.add(el);
-    btn.classList.add('active');
-  }
+  activeFilters.has(el) ? activeFilters.delete(el) : activeFilters.add(el);
+  btn.classList.toggle('active', activeFilters.has(el));
   applyFilters();
 }
 
@@ -838,472 +889,240 @@ function filterSpells() {
 
 function applyFilters() {
   document.querySelectorAll('.spell-card').forEach(card => {
-    const elTags = card.dataset.elements?.split(',') || [];
-    const name = card.dataset.name?.toLowerCase() || '';
-
-    const elMatch = elTags.length === 0 || elTags.some(e => activeFilters.has(e));
-    const searchMatch = !searchQuery || name.includes(searchQuery);
-
-    card.style.display = (elMatch && searchMatch) ? '' : 'none';
+    const els = (card.dataset.elements || '').split(',').filter(Boolean);
+    const name = card.dataset.name || '';
+    const elOk = els.length === 0 || els.some(e => activeFilters.has(e));
+    const srchOk = !searchQuery || name.includes(searchQuery);
+    card.style.display = elOk && srchOk ? '' : 'none';
   });
-
-  // Masque sections vides en mode multi
   document.querySelectorAll('.class-section').forEach(sec => {
-    const visible = [...sec.querySelectorAll('.spell-card')].some(c => c.style.display !== 'none');
-    sec.style.display = visible ? '' : 'none';
+    const vis = [...sec.querySelectorAll('.spell-card')].some(c => c.style.display !== 'none');
+    sec.style.display = vis ? '' : 'none';
   });
 }
 
-// ─── FETCH SPELLS ──────────────────────────────────────────────────────────────
-async function fetchSpells(breedId) {
-  if (spellCache[breedId]) return spellCache[breedId];
-
-  dbgLog('Fetching breedId=' + breedId);
-
-  try {
-    // Stratégie 1: breeds/{id} -> champ spells[]
-    const rb = await fetch(`${API}/breeds/${breedId}?lang=fr`);
-    const db = await rb.json();
-    dbgLog('Breed keys: ' + Object.keys(db).join(', '));
-
-    // Chercher tous les champs qui pourraient contenir des IDs de sorts
-    let spellIds = [];
-    const spellKey = Object.keys(db).find(k => k.toLowerCase().includes('spell'));
-    if (spellKey) {
-      dbgLog('spellKey trouvé: ' + spellKey + ' = ' + JSON.stringify(db[spellKey]).slice(0,100));
-      spellIds = db[spellKey] || [];
-    }
-
-    let spells = [];
-
-    if (spellIds.length) {
-      dbgLog(spellIds.length + ' spellIds trouvés');
-      const idsParam = spellIds.map(id => 'id[$in][]=' + id).join('&');
-      const r2 = await fetch(`${API}/spells?${idsParam}&lang=fr&$limit=100`);
-      const d2 = await r2.json();
-      spells = d2.data || [];
-      dbgLog('Sorts chargés par IDs: ' + spells.length);
-    }
-
-    // Stratégie 2: param breedId direct
-    if (!spells.length) {
-      dbgLog('Fallback: param breedId direct');
-      const r1 = await fetch(`${API}/spells?breedId=${breedId}&lang=fr&$limit=100`);
-      const d1 = await r1.json();
-      spells = d1.data || [];
-      dbgLog('Sorts par breedId param: ' + spells.length);
-      if (d1.total !== undefined) dbgLog('total API: ' + d1.total);
-    }
-
-    // Stratégie 3: typeId (breedId = typeId pour les sorts de classe)
-    if (!spells.length) {
-      dbgLog('Fallback: typeId=' + breedId);
-      const r3 = await fetch(`${API}/spells?typeId=${breedId}&lang=fr&$limit=100`);
-      const d3 = await r3.json();
-      spells = d3.data || [];
-      dbgLog('Sorts par typeId: ' + spells.length);
-    }
-
-    if (!spells.length) {
-      dbgLog('ECHEC: 0 sorts pour breedId=' + breedId);
-      // Log un sort example pour voir la structure
-      const rSample = await fetch(`${API}/spells?lang=fr&$limit=2`);
-      const dSample = await rSample.json();
-      if (dSample.data && dSample.data[0]) {
-        dbgLog('Exemple sort keys: ' + Object.keys(dSample.data[0]).join(', '));
-        dbgLog('Exemple sort breedId field: ' + JSON.stringify(dSample.data[0]).slice(0,200));
-      }
-      spellCache[breedId] = [];
-      return [];
-    }
-
-    // Log structure complète du premier sort + premier level
-    if (spells[0]) {
-      dbgLog('=== SORT[0] ===');
-      dbgLog(JSON.stringify(spells[0]).slice(0, 500));
-    }
-
-    // Fetch niveaux
-    const lastLevelIds = spells
-      .map(s => { const ls = s.spellLevels || []; return ls[ls.length - 1] || null; })
-      .filter(Boolean);
-
-    dbgLog('lastLevelIds count: ' + lastLevelIds.length);
-
-    let levels = [];
-    for (let i = 0; i < lastLevelIds.length; i += 40) {
-      const chunk = lastLevelIds.slice(i, i+40);
-      const lp = chunk.map(id => 'id[$in][]=' + id).join('&');
-      const lr = await fetch(`${API}/spell-levels?${lp}&lang=fr&$limit=50`);
-      const ld = await lr.json();
-      levels.push(...(ld.data || []));
-    }
-    dbgLog('Levels chargés: ' + levels.length);
-    if (levels[0]) {
-      dbgLog('=== LEVEL[0] ===');
-      dbgLog(JSON.stringify(levels[0]).slice(0, 600));
-    }
-
-    const levelMap = {};
-    levels.forEach(l => { levelMap[l.id] = l; });
-
-    spells.forEach(spell => {
-      const ls = spell.spellLevels || [];
-      spell._maxLevel = levelMap[ls[ls.length - 1]] || null;
-    });
-
-    spellCache[breedId] = spells;
-    return spells;
-
-  } catch(e) {
-    dbgLog('ERREUR: ' + e.message);
-    console.error(e);
-    spellCache[breedId] = [];
-    return [];
-  }
-}
-
-function dbgLog(msg) {
-  console.log('[DBG]', msg);
-  const dbg = document.getElementById('debugPanel');
-  if (dbg) {
-    dbg.innerHTML += '<div>' + msg + '</div>';
-    dbg.scrollTop = dbg.scrollHeight;
-  }
-}
-
-// ─── RENDER SINGLE ─────────────────────────────────────────────────────────────
+// ─── RENDER ───────────────────────────────────────────────────────────────────
 async function loadAndRenderSingle(breed) {
   showUI(true);
-  document.getElementById('topbarTitle').textContent = breed.name;
-  document.getElementById('topbarSub').textContent = 'Chargement des sorts…';
+  document.getElementById('topbarTitle').textContent = breed.name.toUpperCase();
+  document.getElementById('topbarSub').textContent = 'Chargement…';
   showLoading();
-
-  const spells = await fetchSpells(breed.id);
-
-  document.getElementById('topbarSub').textContent = `${spells.length} sorts — cliquer pour détails`;
-
+  const entries = await fetchSpells(breed.id);
+  document.getElementById('topbarSub').textContent = `${entries.length} sorts — cliquer pour détails`;
   const content = document.getElementById('content');
   content.innerHTML = '';
-
   const grid = document.createElement('div');
   grid.className = 'spells-grid';
-  spells.forEach(spell => grid.appendChild(buildSpellCard(spell)));
+  entries.forEach(e => grid.appendChild(buildSpellCard(e.spell, e.level)));
   content.appendChild(grid);
-
   applyFilters();
 }
 
-// ─── RENDER MULTI ──────────────────────────────────────────────────────────────
 async function loadAndRenderMulti() {
   showUI(true);
-  const names = activeBreeds.map(b => b.name).join(' · ');
-  document.getElementById('topbarTitle').textContent = 'Multi — KTA 3v3';
-  document.getElementById('topbarSub').textContent = names;
+  document.getElementById('topbarTitle').textContent = 'MULTI — KTA';
+  document.getElementById('topbarSub').textContent = activeBreeds.map(b => b.name).join(' · ');
   showLoading();
-
-  // Fetch toutes en parallèle
   await Promise.all(activeBreeds.map(b => fetchSpells(b.id)));
-
   const content = document.getElementById('content');
   content.innerHTML = '';
 
-  // Header multi
-  const header = document.createElement('div');
-  header.className = 'multiclass-header';
+  const hdr = document.createElement('div');
+  hdr.className = 'multiclass-header';
   activeBreeds.forEach(b => {
-    const badge = document.createElement('div');
-    badge.className = 'multiclass-badge';
-    badge.innerHTML = `
-      <img src="${b.img}" onerror="this.style.display='none'" alt="">
+    hdr.innerHTML += `<div class="multiclass-badge">
       <span class="mc-name">${b.name}</span>
-      <button class="mc-remove" onclick="removeFromMulti(${b.id})" title="Retirer">✕</button>
-    `;
-    header.appendChild(badge);
+      <button class="mc-remove" onclick="removeFromMulti(${b.id})">✕</button>
+    </div>`;
   });
-  content.appendChild(header);
+  content.appendChild(hdr);
 
-  // Section par classe
   activeBreeds.forEach(breed => {
-    const spells = spellCache[breed.id] || [];
-    const section = document.createElement('div');
-    section.className = 'class-section';
-    section.dataset.breedId = breed.id;
-
-    section.innerHTML = `
-      <div class="class-section-title">
-        <img src="${breed.img}" onerror="this.style.display='none'" alt="">
-        <h2>${breed.name}</h2>
-        <span class="spell-count">${spells.length} sorts</span>
-      </div>
-    `;
+    const entries = spellCache[breed.id] || [];
+    const sec = document.createElement('div');
+    sec.className = 'class-section';
+    sec.dataset.breedId = breed.id;
+    sec.innerHTML = `<div class="class-section-title">
+      <h2>${breed.name}</h2>
+      <span class="spell-count">${entries.length} sorts</span>
+    </div>`;
     const grid = document.createElement('div');
     grid.className = 'spells-grid';
-    spells.forEach(spell => grid.appendChild(buildSpellCard(spell)));
-    section.appendChild(grid);
-    content.appendChild(section);
+    entries.forEach(e => grid.appendChild(buildSpellCard(e.spell, e.level)));
+    sec.appendChild(grid);
+    content.appendChild(sec);
   });
-
   applyFilters();
 }
 
 function removeFromMulti(breedId) {
   activeBreeds = activeBreeds.filter(b => b.id !== breedId);
   document.querySelector(`.class-btn[data-id="${breedId}"]`)?.classList.remove('active');
-  if (activeBreeds.length === 0) {
-    showEmpty('Mode Multi actif — sélectionne des classes');
-  } else {
-    loadAndRenderMulti();
-  }
+  activeBreeds.length ? loadAndRenderMulti() : showEmpty('Mode Multi — sélectionne des classes');
 }
 
-// ─── BUILD SPELL CARD ──────────────────────────────────────────────────────────
-function buildSpellCard(spell) {
-  const lvl = spell._maxLevel;
-  const name = spell.name?.fr || spell.name || 'Inconnu';
+// ─── CARD ─────────────────────────────────────────────────────────────────────
+function buildSpellCard(spell, level) {
+  const name = spell.name?.fr || '?';
+  const iconUrl = spell.img || `${API}/img/spells/sort_${spell.iconId || 0}.png`;
 
-  // Détecter les éléments du sort
-  const elements = detectElements(spell, lvl);
-  const elementClasses = elements.map(e => `tag-${e}`);
+  const pa    = level?.apCost ?? '?';
+  const poMin = level?.minRange ?? 1;
+  const poMax = level?.range ?? '?';
+  const cc    = level?.criticalHitProbability || null;
 
-  // Extraire stats clés
-  const pa = lvl?.apCost ?? '?';
-  const poMin = lvl?.minRange ?? 1;
-  const poMax = lvl?.maxRange ?? '?';
-  const cc = lvl?.criticalHitProbability ?? null;
-
-  // Icon URL
-  const iconId = spell.iconId || spell.id;
-  const iconUrl = `https://api.dofusdb.fr/img/${iconId}.png`;
-
+  const elements = detectElements(level);
   const card = document.createElement('div');
   card.className = 'spell-card';
   card.dataset.name = name.toLowerCase();
   card.dataset.elements = elements.join(',');
 
+  const poStr = (poMin === poMax || poMin <= 1 && poMax === 1) ? poMax : `${poMin}-${poMax}`;
+
   card.innerHTML = `
     <div class="spell-card-header" onclick="toggleCard(this.parentElement)">
-      <div class="spell-icon-wrap">
-        <img class="spell-icon" src="${iconUrl}"
-          onerror="this.style.display='none';this.nextSibling.style.display='flex'"
-          alt="${name}">
-        <div class="spell-icon-placeholder" style="display:none">✨</div>
-      </div>
+      <img class="spell-icon" src="${iconUrl}" alt="${name}" onerror="this.src='${API}/img/spells/sort_0.png'">
       <div class="spell-meta">
         <div class="spell-name">${name}</div>
         <div class="spell-tags">
-          ${elements.map(e => `<span class="tag tag-${e}">${elLabel(e)}</span>`).join('')}
+          ${elements.map(e => `<span class="tag tag-${e}">${EL_LABEL[e]||e}</span>`).join('')}
         </div>
       </div>
       <div class="spell-quick-stats">
-        <div class="qs-item">
-          <span class="qs-val pa">${pa}</span>
-          <span class="qs-label">PA</span>
-        </div>
-        <div class="qs-item">
-          <span class="qs-val po">${poMin === poMax ? poMax : poMin+'‑'+poMax}</span>
-          <span class="qs-label">PO</span>
-        </div>
-        ${cc ? `<div class="qs-item">
-          <span class="qs-val cc">${cc}%</span>
-          <span class="qs-label">CC</span>
-        </div>` : ''}
+        <div class="qs-item"><span class="qs-val pa">${pa}</span><span class="qs-label">PA</span></div>
+        <div class="qs-item"><span class="qs-val po">${poStr}</span><span class="qs-label">PO</span></div>
+        ${cc ? `<div class="qs-item"><span class="qs-val cc">${cc}%</span><span class="qs-label">CC</span></div>` : ''}
       </div>
       <span class="expand-arrow">▼</span>
     </div>
-    <div class="spell-details">
-      ${buildDetails(spell, lvl)}
-    </div>
+    <div class="spell-details">${buildDetails(spell, level)}</div>
   `;
-
   return card;
 }
 
-function toggleCard(card) {
-  card.classList.toggle('expanded');
-}
+function toggleCard(card) { card.classList.toggle('expanded'); }
 
-// ─── BUILD DETAILS ─────────────────────────────────────────────────────────────
+// ─── DETAILS ──────────────────────────────────────────────────────────────────
 function buildDetails(spell, lvl) {
-  if (!lvl) return '<div style="padding:12px;color:var(--muted);font-size:12px">Détails non disponibles</div>';
+  if (!lvl) return `<div style="padding:12px;color:var(--muted);font-size:12px">Pas de données disponibles</div>`;
 
-  const pa = lvl.apCost ?? '?';
-  const pm = lvl.movementPointsCost ?? 0;
-  const poMin = lvl.minRange ?? 1;
-  const poMax = lvl.maxRange ?? '?';
-  const cc = lvl.criticalHitProbability;
-  const los = lvl.castInLine !== undefined ? lvl.castInLine : null;
-  const lineOnly = lvl.castInLineToo || false;
-  const aoe = lvl.areaSize ?? 0;
-  const aoeType = lvl.areaShape ?? null;
-  const perTurn = lvl.maxCastPerTurn ?? 0;
-  const perTarget = lvl.maxCastPerTarget ?? 0;
-  const cooldown = lvl.minCastInterval ?? 0;
-  const modifRange = lvl.rangeCanBeBoosted ?? false;
+  const pa      = lvl.apCost ?? '?';
+  const poMin   = lvl.minRange ?? 1;
+  const poMax   = lvl.range ?? '?';
+  const cc      = lvl.criticalHitProbability;
+  const los     = lvl.castTestLos;
+  const linear  = lvl.castInLine;
+  const modPO   = lvl.rangeCanBeBoosted;
+  const perTurn = lvl.maxCastPerTurn;
+  const perTgt  = lvl.maxCastPerTarget;
+  const cd      = lvl.minCastInterval;
+  const initCd  = lvl.initialCooldown;
 
-  // Stats grid
   const stats = [
-    { val: pa, label: 'Coût PA', cls: 'highlight' },
-    pm > 0 ? { val: pm, label: 'Coût PM' } : null,
-    { val: poMin === poMax ? poMax : `${poMin}→${poMax}`, label: 'Portée' },
-    cc ? { val: cc + '%', label: 'Taux CC' } : null,
-    aoe > 0 ? { val: aoe + ' ' + aoeShape(aoeType), label: 'Zone' } : null,
-    perTurn > 0 ? { val: perTurn, label: '/tour' } : null,
-    cooldown > 0 ? { val: cooldown, label: 'Relance' } : null,
-    perTarget > 0 ? { val: perTarget, label: '/cible' } : null,
-    { val: los === false ? '⛔ Non' : '✓ Oui', label: 'Ligne de vue' },
-    modifRange ? { val: '✓', label: 'PO modif.' } : null,
+    { val: pa,   label: 'Coût PA',    hi: true },
+    { val: `${poMin}→${poMax}`, label: 'Portée' },
+    cc  ? { val: cc+'%', label: 'Taux CC' } : null,
+    los !== undefined ? { val: los ? '✓' : '✗', label: 'LdV' } : null,
+    linear ? { val: '✓', label: 'En ligne' } : null,
+    modPO ? { val: '✓', label: 'PO modif.' } : null,
+    perTurn > 0  ? { val: perTurn,  label: '/tour' } : null,
+    perTgt  > 0  ? { val: perTgt,   label: '/cible' } : null,
+    cd      > 0  ? { val: cd,       label: 'Relance' } : null,
+    initCd  > 0  ? { val: initCd,   label: 'CD init.' } : null,
   ].filter(Boolean);
 
   const statsHtml = `
     <div class="detail-section">
       <div class="detail-title">Statistiques</div>
       <div class="stats-grid">
-        ${stats.map(s => `
-          <div class="stat-box">
-            <span class="stat-box-val ${s.cls||''}">${s.val}</span>
-            <span class="stat-box-label">${s.label}</span>
-          </div>
-        `).join('')}
+        ${stats.map(s => `<div class="stat-box">
+          <span class="stat-box-val ${s.hi?'highlight':''}">${s.val}</span>
+          <span class="stat-box-label">${s.label}</span>
+        </div>`).join('')}
       </div>
-    </div>
-  `;
+    </div>`;
 
   // Effets normaux
   const effects = lvl.effects || [];
-  const ccEffects = lvl.criticalEffects || [];
+  const ccEffects = lvl.criticalEffect || [];
 
-  let effectsHtml = '';
-  if (effects.length > 0) {
-    effectsHtml += `
-      <div class="detail-section">
-        <div class="detail-title">Effets</div>
-        <div class="effects-list">
-          ${effects.map(e => buildEffectRow(e)).join('')}
-        </div>
-      </div>
-    `;
-  }
-  if (ccEffects.length > 0) {
-    effectsHtml += `
-      <div class="detail-section">
-        <div class="detail-title">⚡ Critique</div>
-        <div class="effects-list">
-          ${ccEffects.map(e => buildEffectRow(e, true)).join('')}
-        </div>
-      </div>
-    `;
-  }
+  const fxHtml = effects.length ? `
+    <div class="detail-section">
+      <div class="detail-title">Effets</div>
+      <div class="effects-list">${effects.map(e => buildEffectRow(e)).join('')}</div>
+    </div>` : '';
 
-  // Variantes
-  const variants = spell.variants || [];
-  let variantsHtml = '';
-  if (variants.length > 0) {
-    variantsHtml = `
-      <div class="detail-section">
-        <div class="detail-title">Variantes (${variants.length})</div>
-        <div class="variants-row">
-          ${variants.map(v => {
-            const vname = v.name?.fr || v.name || '?';
-            const vicon = `https://api.dofusdb.fr/img/${v.iconId || v.id}.png`;
-            return `
-              <div class="variant-chip" title="${vname}">
-                <img src="${vicon}" onerror="this.style.display='none'" alt="">
-                <span class="v-name">${vname}</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-  }
+  const ccFxHtml = ccEffects.length ? `
+    <div class="detail-section">
+      <div class="detail-title">⚡ Critique</div>
+      <div class="effects-list">${ccEffects.map(e => buildEffectRow(e, true)).join('')}</div>
+    </div>` : '';
 
   // Description
-  const desc = spell.description?.fr || spell.description || '';
-  let descHtml = '';
-  if (desc) {
-    descHtml = `
-      <div class="detail-section">
-        <div class="detail-title">Description</div>
-        <div style="font-size:12px;color:var(--muted2);line-height:1.5;padding:6px 8px;background:var(--bg3);border-radius:5px">${desc}</div>
-      </div>
-    `;
+  const desc = spell.description?.fr || '';
+  const descHtml = desc ? `
+    <div class="detail-section">
+      <div class="detail-title">Description</div>
+      <div style="font-size:12px;color:var(--muted2);line-height:1.5;padding:7px 10px;background:var(--bg3);border-radius:5px">${desc}</div>
+    </div>` : '';
+
+  return statsHtml + fxHtml + ccFxHtml + descHtml;
+}
+
+function buildEffectRow(fx, isCrit = false) {
+  // diceNum→diceSide = min→max dommages
+  const min = fx.diceNum ?? 0;
+  const max = fx.diceSide ?? 0;
+  const el  = EL_MAP[fx.effectElement] || 'neutre';
+  const effectName = EFFECT_ID_NAMES[fx.effectId] || `Effet ${fx.effectId}`;
+
+  // Affichage dommages
+  let dmgStr = '';
+  if (min > 0 || max > 0) {
+    dmgStr = min === max ? `${min}` : `${min}→${max}`;
   }
 
-  return statsHtml + effectsHtml + variantsHtml + descHtml;
+  const isDmg = [100,101,81,105,91,96].includes(fx.effectId);
+  const isSoin = fx.effectId === 81;
+  const rowCls = isDmg ? `dmg-${isSoin ? 'soin' : el}` : 'effect-special';
+  const dmgCls = isSoin ? 'soin' : (isDmg ? el : '');
+  const color = isSoin ? 'var(--green)' : (EL_COLOR[el] || 'var(--muted2)');
+
+  return `<div class="effect-row ${rowCls}">
+    ${dmgStr ? `<span class="effect-dmg" style="color:${color}">${dmgStr}</span>` : '<span class="effect-dmg" style="color:var(--muted)">—</span>'}
+    <span class="effect-desc">${effectName}${isDmg && el !== 'neutre' ? ` <span style="color:${color};font-size:10px">(${EL_LABEL[el]})</span>` : ''}</span>
+  </div>`;
 }
 
-function buildEffectRow(effect, isCrit = false) {
-  const desc = effect.description?.fr || effect.description || effect.effect?.fr || '';
-  const min = effect.min ?? effect.value ?? '';
-  const max = effect.max ?? '';
-  const dmgStr = max && max !== min ? `${min}→${max}` : `${min}`;
-
-  // Détecter l'élément de l'effet
-  const el = detectEffectElement(desc);
-  const rowClass = el ? `dmg-${el}` : '';
-  const dmgClass = el || '';
-
-  return `
-    <div class="effect-row ${rowClass}">
-      <span class="effect-dmg ${dmgClass}">${dmgStr || '—'}</span>
-      <span class="effect-desc">${desc || 'Effet spécial'}</span>
-    </div>
-  `;
-}
-
-// ─── HELPERS ───────────────────────────────────────────────────────────────────
-function detectElements(spell, lvl) {
+// ─── DÉTECTION ÉLÉMENTS ───────────────────────────────────────────────────────
+function detectElements(level) {
+  if (!level) return ['util'];
   const els = new Set();
-  const effects = [...(lvl?.effects || []), ...(lvl?.criticalEffects || [])];
+  const allFx = [...(level.effects || []), ...(level.criticalEffect || [])];
 
-  effects.forEach(e => {
-    const d = (e.description?.fr || e.description || '').toLowerCase();
-    const el = detectEffectElement(d);
-    if (el) els.add(el);
+  allFx.forEach(fx => {
+    if ([100,101,105,91,96].includes(fx.effectId)) {
+      // Sort offensif → élément
+      const el = EL_MAP[fx.effectElement];
+      if (el) els.add(el);
+    }
+    if (fx.effectId === 81) els.add('soin'); // soins → on map sur eau visuellement
+    if (fx.effectId === 132) els.add('invoc');
   });
 
-  // Détection par nom de sort / catégorie
-  const name = (spell.name?.fr || '').toLowerCase();
-  if (name.includes('invoc') || name.includes('arbre') || name.includes('tofu') || name.includes('familier')) els.add('invoc');
-
-  // Si aucun élément de dommages → util
   if (els.size === 0) els.add('util');
-
   return [...els];
 }
 
-function detectEffectElement(desc) {
-  const d = desc.toLowerCase();
-  if (d.includes('terre') || d.includes('earth')) return 'terre';
-  if (d.includes('feu') || d.includes('fire')) return 'feu';
-  if (d.includes('eau') || d.includes('water')) return 'eau';
-  if (d.includes('air') || d.includes('wind') || d.includes('vent')) return 'air';
-  if (d.includes('neutre') || d.includes('neutral')) return 'neutre';
-  if (d.includes('soin') || d.includes('heal')) return 'soin';
-  return null;
-}
-
-function elLabel(el) {
-  const labels = { terre:'Terre', feu:'Feu', eau:'Eau', air:'Air', neutre:'Neutre', invoc:'Invoc', util:'Util', soin:'Soin' };
-  return labels[el] || el;
-}
-
-function aoeShape(shape) {
-  if (!shape) return '';
-  const map = { C:'cercle', L:'ligne', T:'T', X:'croix', Q:'carré', D:'diagonale' };
-  return map[shape] || shape;
-}
-
-// ─── UI HELPERS ────────────────────────────────────────────────────────────────
+// ─── UI ───────────────────────────────────────────────────────────────────────
 function showEmpty(msg = 'Clique sur une classe pour afficher ses sorts') {
   document.getElementById('content').innerHTML = `
     <div class="empty-state">
       <div class="big-icon">⚔️</div>
       <h2>Encyclopédie Sorts</h2>
       <p>${msg}</p>
-    </div>
-  `;
+      <p style="margin-top:8px;font-size:11px;color:var(--muted)">Mode Multi : sélectionne plusieurs classes (KTA 3v3)</p>
+    </div>`;
 }
 
 function showLoading() {
@@ -1311,9 +1130,7 @@ function showLoading() {
     <div class="loading-state">
       <div class="loading-ring"></div>
       <div class="loading-text">Chargement des sorts…</div>
-      <div id="debugPanel" style="margin-top:16px;background:#0a0c10;border:1px solid #1f2840;border-radius:6px;padding:10px 14px;font-size:11px;font-family:monospace;color:#5a6a8a;text-align:left;max-height:200px;overflow-y:auto;width:500px;max-width:90vw;"></div>
-    </div>
-  `;
+    </div>`;
 }
 
 function showUI(show) {
@@ -1322,7 +1139,6 @@ function showUI(show) {
   document.getElementById('searchBar').style.display = show ? '' : 'none';
 }
 
-// Init
 init();
 </script>
 </body>
