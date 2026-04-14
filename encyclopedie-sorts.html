@@ -917,10 +917,10 @@ async function fetchSpells(breedId) {
       return [];
     }
 
-    // Log structure du premier sort
+    // Log structure complète du premier sort + premier level
     if (spells[0]) {
-      dbgLog('Sort[0] keys: ' + Object.keys(spells[0]).join(', '));
-      dbgLog('Sort[0] spellLevels: ' + JSON.stringify(spells[0].spellLevels || []).slice(0,80));
+      dbgLog('=== SORT[0] ===');
+      dbgLog(JSON.stringify(spells[0]).slice(0, 500));
     }
 
     // Fetch niveaux
@@ -939,6 +939,10 @@ async function fetchSpells(breedId) {
       levels.push(...(ld.data || []));
     }
     dbgLog('Levels chargés: ' + levels.length);
+    if (levels[0]) {
+      dbgLog('=== LEVEL[0] ===');
+      dbgLog(JSON.stringify(levels[0]).slice(0, 600));
+    }
 
     const levelMap = {};
     levels.forEach(l => { levelMap[l.id] = l; });
