@@ -62,19 +62,18 @@ body::before {
 
 /* ─── SIDEBAR CLASSES ────────────────────────────── */
 .sidebar {
-  width: 150px;
+  width: 160px;
   background: var(--bg2);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 12px 8px;
-  gap: 3px;
-  overflow-y: auto;
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
   flex-shrink: 0;
-  scrollbar-width: none;
+  justify-content: stretch;
 }
-.sidebar::-webkit-scrollbar { display: none; }
 
 .sidebar-logo {
   font-family: 'Exo 2', sans-serif;
@@ -88,47 +87,47 @@ body::before {
 }
 
 .class-btn {
-  width: 136px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg3);
+  width: 100%;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
   cursor: pointer;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  transition: all .2s;
-  flex-shrink: 0;
+  gap: 8px;
+  padding: 0 10px;
+  transition: all .15s;
+  flex: 1;
 }
 .class-btn:hover {
-  border-color: var(--border2);
   background: var(--bg4);
 }
 .class-btn.active {
-  border-color: var(--gold);
   background: rgba(244,180,0,.08);
-  box-shadow: 0 0 10px rgba(244,180,0,.12);
+  border-left: 3px solid var(--gold);
 }
 .class-btn img {
-  width: 32px; height: 32px;
+  width: 30px; height: 30px;
   object-fit: contain;
   image-rendering: auto;
-  border-radius: 6px;
+  border-radius: 5px;
   flex-shrink: 0;
   filter: drop-shadow(0 1px 3px rgba(0,0,0,.5));
 }
 .class-btn .class-label {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: .4px;
+  letter-spacing: .3px;
   text-transform: uppercase;
   color: var(--muted);
   line-height: 1;
   white-space: nowrap;
 }
 .class-btn.active .class-label { color: var(--gold); }
+.class-btn.active img { filter: drop-shadow(0 0 4px rgba(244,180,0,.5)); }
 
 /* ─── MAIN PANEL ─────────────────────────────────── */
 .main {
@@ -897,7 +896,7 @@ body::before {
 
   <!-- SIDEBAR CLASSES -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo">KTA</div>
+    
     <!-- Généré par JS -->
   </div>
 
@@ -933,25 +932,25 @@ body::before {
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const BREEDS = [
-  { id:1,  name:'Féca',       short:'Féca'   },
-  { id:2,  name:'Osamodas',   short:'Osa'    },
-  { id:3,  name:'Enutrof',    short:'Enu'    },
-  { id:4,  name:'Sram',       short:'Sram'   },
-  { id:5,  name:'Xélor',      short:'Xél'    },
-  { id:6,  name:'Ecaflip',    short:'Eca'    },
-  { id:7,  name:'Eniripsa',   short:'Eni'    },
-  { id:8,  name:'Iop',        short:'Iop'    },
   { id:9,  name:'Crâ',        short:'Crâ'    },
-  { id:10, name:'Sadida',     short:'Sadi'   },
-  { id:11, name:'Sacrieur',   short:'Sacri'  },
+  { id:6,  name:'Ecaflip',    short:'Eca'    },
+  { id:16, name:'Éliotrope',  short:'Élio'   },
+  { id:7,  name:'Eniripsa',   short:'Eni'    },
+  { id:3,  name:'Enutrof',    short:'Enu'    },
+  { id:1,  name:'Féca',       short:'Féca'   },
+  { id:20, name:'Forgelance', short:'Forge'  },
+  { id:17, name:'Huppermage', short:'Hupp'   },
+  { id:8,  name:'Iop',        short:'Iop'    },
+  { id:18, name:'Ouginak',    short:'Ougi'   },
+  { id:2,  name:'Osamodas',   short:'Osa'    },
   { id:12, name:'Pandawa',    short:'Panda'  },
   { id:13, name:'Roublard',   short:'Roub'   },
-  { id:14, name:'Zobal',      short:'Zobal'  },
+  { id:11, name:'Sacrieur',   short:'Sacri'  },
+  { id:10, name:'Sadida',     short:'Sadi'   },
+  { id:4,  name:'Sram',       short:'Sram'   },
   { id:15, name:'Steamer',    short:'Steam'  },
-  { id:16, name:'Éliotrope',  short:'Élio'   },
-  { id:17, name:'Huppermage', short:'Hupp'   },
-  { id:18, name:'Ouginak',    short:'Ougi'   },
-  { id:20, name:'Forgelance', short:'Forge'  },
+  { id:5,  name:'Xélor',      short:'Xél'    },
+  { id:14, name:'Zobal',      short:'Zobal'  },
 ];
 
 const EL_MAP   = { 0:'neutre', 1:'feu', 2:'eau', 3:'air', 4:'terre', 5:'neutre' };
@@ -984,7 +983,7 @@ function init() {
 
 function renderSidebar() {
   const sb = document.getElementById('sidebar');
-  sb.innerHTML = '<div class="sidebar-logo">KTA</div>';
+  sb.innerHTML = '';
   BREEDS.forEach(b => {
     const btn = document.createElement('button');
     btn.className = 'class-btn';
