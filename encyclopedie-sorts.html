@@ -1223,7 +1223,7 @@ function buildSpellHalf(spell, lvl, role, firstLvl) {
   const poMax = lvl?.range ?? '?';
   const cc    = lvl?.criticalHitProbability || null;
   const poStr = (poMin <= 1 && poMax === 1) ? `${poMax}` : `${poMin}-${poMax}`;
-  const elements = detectElements(lvl);
+  const elements = detectElements(lvl, spell.description?.fr || '');
 
   const mainEl = elements[0] || 'util';
   const minLvl = firstLvl?.minPlayerLevel || null;
@@ -1285,25 +1285,12 @@ function buildSpellDetail(spell, lvl) {
     cd      > 0 ? { val: cd,     label: 'CD' }    : null,
   ].filter(Boolean);
 
-  const effects   = lvl.effects || [];
-  const ccEffects = lvl.criticalEffect || [];
-  const visibleFx   = effects.filter(e => e.visibleInTooltip === true && e.diceNum > 0 && EFFECT_NAMES[e.effectId]);
-  const visibleCCFx = ccEffects.filter(e => e.visibleInTooltip === true && e.diceNum > 0 && EFFECT_NAMES[e.effectId]);
-
   const desc = spell.description?.fr || '';
 
   return `
     <div class="detail-stats-mini">
       ${stats.map(s => `<div class="stat-mini ${s.hi?'hi':''}"><span>${s.val}</span><small>${s.label}</small></div>`).join('')}
     </div>
-    ${visibleFx.length ? `
-      <div class="detail-fx-title">Effets</div>
-      <div class="effects-list">${visibleFx.map(e => buildEffectRow(e)).join('')}</div>
-    ` : ''}
-    ${visibleCCFx.length ? `
-      <div class="detail-fx-title">⚡ Critique</div>
-      <div class="effects-list">${visibleCCFx.map(e => buildEffectRow(e, true)).join('')}</div>
-    ` : ''}
     ${desc ? `<div class="spell-desc">${desc}</div>` : ''}
   `;
 }
@@ -1326,23 +1313,24 @@ function buildEffectRow(fx) {
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
-function detectElements(lvl) {
-  if (!lvl) return ['util'];
+function detectElements(lvl, spellDesc) {
   const els = new Set();
-  const allFx = [...(lvl.effects||[]), ...(lvl.criticalEffect||[])];
-  allFx.forEach(fx => {
-    // Dommages directs (visibleInTooltip + diceNum > 0)
-    const isDmg = [100,97,101,91,96,105].includes(fx.effectId);
-    if (isDmg && fx.diceNum > 0 && fx.visibleInTooltip !== false) {
-      // effectElement: 0=neutre,1=feu,2=eau,3=air,4=terre — -1 = pas de type visible
-      if (fx.effectElement >= 0) {
-        const el = EL_MAP[fx.effectElement];
-        if (el) els.add(el);
-      }
-    }
-    if (fx.effectId === 81 && fx.diceNum > 0) els.add('soin');
-    if (fx.effectId === 132) els.add('invoc');
-  });
+  const desc = (spellDesc || '').toLowerCase();
+
+  // Détection par description (la plus fiable pour Dofus 3)
+  if (desc.includes('terre') || desc.includes('earth'))       els.add('terre');
+  if (desc.includes('feu')   || desc.includes('fire'))        els.add('feu');
+  if (desc.includes('eau')   || desc.includes('water'))       els.add('eau');
+  if (desc.includes('air')   || desc.includes('wind'))        els.add('air');
+  if (desc.includes('neutre')|| desc.includes('neutral'))     els.add('neutre');
+  if (desc.includes('soin')  || desc.includes('heal') || desc.includes('vie')) els.add('soin');
+
+  // Invocations via effectId 132
+  if (lvl) {
+    const allFx = [...(lvl.effects||[]), ...(lvl.criticalEffect||[])];
+    if (allFx.some(fx => fx.effectId === 132)) els.add('invoc');
+  }
+
   if (els.size === 0) els.add('util');
   return [...els];
 }
