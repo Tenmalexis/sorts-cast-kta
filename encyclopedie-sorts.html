@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encyclopédie Sorts — KTA Commentateur</title>
+<link href="https://fonts.bunny.net/css?family=rajdhani:400,500,600,700|exo-2:400,500,600,700,800,900|dm-sans:400,500,600" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07090d;
+  --bg2:      #0d1017;
+  --bg3:      #121620;
+  --bg4:      #181d2a;
+  --bg5:      #1e2436;
+  --border:   #1f2840;
+  --border2:  #2a3550;
+  --gold:     #f4b400;
+  --gold2:    #ffd54f;
+  --gold-dim: #7a5a00;
+  --text:     #dde3f5;
+  --muted:    #5a6a8a;
+  --muted2:   #8a9ab8;
+  --green:    #39d98a;
+  --red:      #ff5c5c;
+  --blue:     #4fa8ff;
+  --purple:   #b06aff;
+  --orange:   #ff8c42;
+  --cyan:     #3ee8d0;
+
+  /* Couleurs par élément */
+  --col-terre:   #c8a060;
+  --col-feu:     #ff6b35;
+  --col-eau:     #4aa8d8;
+  --col-air:     #a8d8a8;
+  --col-neutre:  #b0b0c8;
+  --col-invoc:   #b06aff;
+  --col-util:    #f4b400;
+  --col-passif:  #5a6a8a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: .4;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────── */
+.app { display: flex; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
+
+/* ─── SIDEBAR CLASSES ────────────────────────────── */
+.sidebar {
+  width: 72px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 4px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.sidebar::-webkit-scrollbar { display: none; }
+
+.sidebar-logo {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  margin-bottom: 8px;
+  opacity: .6;
+}
+
+.class-btn {
+  width: 52px; height: 52px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: var(--bg3);
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.class-btn:hover {
+  border-color: var(--border2);
+  background: var(--bg4);
+  transform: translateX(2px);
+}
+.class-btn.active {
+  border-color: var(--gold);
+  background: rgba(244,180,0,.08);
+  box-shadow: 0 0 12px rgba(244,180,0,.15), inset 0 0 12px rgba(244,180,0,.04);
+}
+.class-btn img {
+  width: 32px; height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  border-radius: 4px;
+}
+.class-btn .class-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+}
+.class-btn.active .class-label { color: var(--gold); }
+
+/* ─── MAIN PANEL ─────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ─── TOPBAR ─────────────────────────────────────── */
+.topbar {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.topbar-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Filtre élément */
+.el-filters {
+  display: flex;
+  gap: 4px;
+}
+.el-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  transition: all .15s;
+  opacity: .5;
+}
+.el-btn:hover { opacity: .8; border-color: var(--border2); }
+.el-btn.active { opacity: 1; border-color: currentColor; }
+.el-btn[data-el="terre"] { color: var(--col-terre); }
+.el-btn[data-el="feu"]   { color: var(--col-feu); }
+.el-btn[data-el="eau"]   { color: var(--col-eau); }
+.el-btn[data-el="air"]   { color: var(--col-air); }
+.el-btn[data-el="invoc"] { color: var(--col-invoc); }
+.el-btn[data-el="util"]  { color: var(--col-util); }
+.el-btn.active[data-el="terre"] { background: rgba(200,160,96,.1); }
+.el-btn.active[data-el="feu"]   { background: rgba(255,107,53,.1); }
+.el-btn.active[data-el="eau"]   { background: rgba(74,168,216,.1); }
+.el-btn.active[data-el="air"]   { background: rgba(168,216,168,.1); }
+.el-btn.active[data-el="invoc"] { background: rgba(176,106,255,.1); }
+.el-btn.active[data-el="util"]  { background: rgba(244,180,0,.1); }
+
+.search-bar {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  width: 180px;
+  transition: border-color .2s;
+}
+.search-bar:focus { border-color: var(--gold); }
+.search-bar::placeholder { color: var(--muted); }
+
+/* ─── CONTENT ────────────────────────────────────── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.content::-webkit-scrollbar { width: 5px; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ─── EMPTY STATE ────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: var(--muted);
+}
+.empty-state .big-icon { font-size: 64px; opacity: .3; }
+.empty-state h2 {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--muted2);
+}
+.empty-state p { font-size: 13px; }
+
+/* ─── LOADING ────────────────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+.loading-ring {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ─── SPELL GRID ─────────────────────────────────── */
+.spells-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+/* ─── SPELL CARD ─────────────────────────────────── */
+.spell-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.spell-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.spell-card.expanded {
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 0 1px rgba(244,180,0,.2);
+}
+
+.spell-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.spell-icon-wrap {
+  position: relative; flex-shrink: 0;
+}
+.spell-icon {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+}
+.spell-icon-placeholder {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; opacity: .4;
+}
+
+.spell-meta { flex: 1; min-width: 0; }
+.spell-name {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.spell-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.tag {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.tag-terre  { background: rgba(200,160,96,.15); color: var(--col-terre); }
+.tag-feu    { background: rgba(255,107,53,.15); color: var(--col-feu); }
+.tag-eau    { background: rgba(74,168,216,.15); color: var(--col-eau); }
+.tag-air    { background: rgba(168,216,168,.15); color: var(--col-air); }
+.tag-neutre { background: rgba(176,176,200,.15); color: var(--col-neutre); }
+.tag-invoc  { background: rgba(176,106,255,.15); color: var(--col-invoc); }
+.tag-util   { background: rgba(244,180,0,.15); color: var(--col-util); }
+.tag-passif { background: rgba(90,106,138,.15); color: var(--col-passif); }
+.tag-pa     { background: rgba(79,168,255,.12); color: var(--blue); }
+.tag-pm     { background: rgba(57,217,138,.12); color: var(--green); }
+
+.spell-quick-stats {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.qs-item {
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.qs-val {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+}
+.qs-val.pa { color: var(--blue); }
+.qs-val.po { color: var(--cyan); }
+.qs-val.cc { color: var(--gold); }
+.qs-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.expand-arrow {
+  color: var(--muted);
+  font-size: 12px;
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.spell-card.expanded .expand-arrow { transform: rotate(180deg); }
+
+/* ─── SPELL DETAILS ──────────────────────────────── */
+.spell-details {
+  border-top: 1px solid var(--border);
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s ease, padding .3s;
+}
+.spell-card.expanded .spell-details {
+  max-height: 1000px;
+  padding: 14px;
+}
+
+.detail-section { margin-bottom: 12px; }
+.detail-section:last-child { margin-bottom: 0; }
+
+.detail-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.detail-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.stat-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.stat-box-val {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-box-val.highlight { color: var(--gold); }
+.stat-box-label {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1;
+}
+
+/* Effets */
+.effects-list { display: flex; flex-direction: column; gap: 4px; }
+.effect-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--bg3);
+  border-radius: 5px;
+  border-left: 2px solid transparent;
+  font-size: 12px;
+}
+.effect-row.dmg-terre  { border-color: var(--col-terre); }
+.effect-row.dmg-feu    { border-color: var(--col-feu); }
+.effect-row.dmg-eau    { border-color: var(--col-eau); }
+.effect-row.dmg-air    { border-color: var(--col-air); }
+.effect-row.dmg-neutre { border-color: var(--col-neutre); }
+.effect-row.dmg-soin   { border-color: var(--green); }
+.effect-row.effect-special { border-color: var(--purple); }
+
+.effect-dmg {
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  min-width: 60px;
+}
+.effect-dmg.terre  { color: var(--col-terre); }
+.effect-dmg.feu    { color: var(--col-feu); }
+.effect-dmg.eau    { color: var(--col-eau); }
+.effect-dmg.air    { color: var(--col-air); }
+.effect-dmg.neutre { color: var(--col-neutre); }
+.effect-dmg.soin   { color: var(--green); }
+
+.effect-desc { color: var(--muted2); flex: 1; line-height: 1.3; }
+
+/* Variantes */
+.variants-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.variant-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  color: var(--muted2);
+}
+.variant-chip:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: rgba(244,180,0,.05);
+}
+.variant-chip img {
+  width: 20px; height: 20px;
+  image-rendering: pixelated;
+  border-radius: 3px;
+}
+.variant-chip .v-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ─── MULTI-CLASS PANEL ─────────────────────────── */
+.multiclass-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.multiclass-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.multiclass-badge img {
+  width: 24px; height: 24px;
+  image-rendering: pixelated;
+  border-radius: 4px;
+}
+.multiclass-badge .mc-name {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.mc-remove {
+  background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  font-size: 12px; padding: 0 0 0 4px;
+  transition: color .15s;
+}
+.mc-remove:hover { color: var(--red); }
+
+.class-section { margin-bottom: 32px; }
+.class-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border-radius: 8px;
+  border-left: 3px solid var(--gold);
+}
+.class-section-title img {
+  width: 32px; height: 32px;
+  image-rendering: pixelated;
+  border-radius: 6px;
+}
+.class-section-title h2 {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold);
+}
+.class-section-title .spell-count {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: auto;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+}
+
+/* ─── MODE TABS ──────────────────────────────────── */
+.mode-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg3);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.mode-tab {
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+}
+.mode-tab.active {
+  background: var(--bg5);
+  color: var(--gold);
+  border: 1px solid var(--border2);
+}
+
+/* ─── TOOLTIP ────────────────────────────────────── */
+.tooltip {
+  position: fixed;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text);
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 200px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  display: none;
+}
+
+/* ─── SCROLLBAR GLOBAL ───────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ─── RESPONSIVE ─────────────────────────────────── */
+@media (max-width: 600px) {
+  .spells-grid { grid-template-columns: 1fr; }
+  .sidebar { width: 60px; }
+  .class-btn { width: 44px; height: 44px; }
+  .search-bar { width: 120px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR CLASSES -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">KTA</div>
+    <!-- Généré par JS -->
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbarTitle">Encyclopédie Sorts</div>
+        <div class="topbar-sub" id="topbarSub">Clique sur une classe pour afficher ses sorts</div>
+      </div>
+      <div class="topbar-right">
+        <div class="mode-tabs" id="modeTabs" style="display:none">
+          <button class="mode-tab active" data-mode="single" onclick="setMode('single')">Classe</button>
+          <button class="mode-tab" data-mode="multi" onclick="setMode('multi')">Multi</button>
+        </div>
+        <div class="el-filters" id="elFilters" style="display:none">
+          <button class="el-btn active" data-el="terre" title="Terre" onclick="toggleEl(this)">🟤</button>
+          <button class="el-btn active" data-el="feu"   title="Feu"   onclick="toggleEl(this)">🔴</button>
+          <button class="el-btn active" data-el="eau"   title="Eau"   onclick="toggleEl(this)">🔵</button>
+          <button class="el-btn active" data-el="air"   title="Air"   onclick="toggleEl(this)">⚪</button>
+          <button class="el-btn active" data-el="invoc" title="Invocations" onclick="toggleEl(this)">🟣</button>
+          <button class="el-btn active" data-el="util"  title="Utilitaires" onclick="toggleEl(this)">⭐</button>
+        </div>
+        <input class="search-bar" id="searchBar" placeholder="🔍 Chercher un sort…" oninput="filterSpells()" style="display:none">
+      </div>
+    </div>
+    <div class="content" id="content">
+      <div class="empty-state">
+        <div class="big-icon">⚔️</div>
+        <h2>Sélectionne une classe</h2>
+        <p>Clique sur une icône à gauche pour explorer ses sorts</p>
+        <p style="margin-top:8px;font-size:11px;color:var(--muted)">Mode Multi : sélectionne plusieurs classes (KTA 3v3)</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ─── CONFIG CLASSES ────────────────────────────────────────────────────────────
+const BREEDS = [
+  { id:1,  name:'Féca',       short:'Féca',   img:'https://api.dofusdb.fr/img/7366.png' },
+  { id:2,  name:'Osamodas',   short:'Osa',    img:'https://api.dofusdb.fr/img/7367.png' },
+  { id:3,  name:'Enutrof',    short:'Enu',    img:'https://api.dofusdb.fr/img/7368.png' },
+  { id:4,  name:'Sram',       short:'Sram',   img:'https://api.dofusdb.fr/img/7369.png' },
+  { id:5,  name:'Xélor',      short:'Xél',    img:'https://api.dofusdb.fr/img/7370.png' },
+  { id:6,  name:'Ecaflip',    short:'Eca',    img:'https://api.dofusdb.fr/img/7371.png' },
+  { id:7,  name:'Eniripsa',   short:'Eni',    img:'https://api.dofusdb.fr/img/7372.png' },
+  { id:8,  name:'Iop',        short:'Iop',    img:'https://api.dofusdb.fr/img/7373.png' },
+  { id:9,  name:'Crâ',        short:'Crâ',    img:'https://api.dofusdb.fr/img/7374.png' },
+  { id:10, name:'Sadida',     short:'Sadi',   img:'https://api.dofusdb.fr/img/7375.png' },
+  { id:11, name:'Sacrieur',   short:'Sacri',  img:'https://api.dofusdb.fr/img/7376.png' },
+  { id:12, name:'Pandawa',    short:'Panda',  img:'https://api.dofusdb.fr/img/7377.png' },
+  { id:13, name:'Roublard',   short:'Roub',   img:'https://api.dofusdb.fr/img/7378.png' },
+  { id:14, name:'Zobal',      short:'Zobal',  img:'https://api.dofusdb.fr/img/7379.png' },
+  { id:15, name:'Steamer',    short:'Steam',  img:'https://api.dofusdb.fr/img/7380.png' },
+  { id:16, name:'Éliotrope',  short:'Élio',   img:'https://api.dofusdb.fr/img/7381.png' },
+  { id:17, name:'Huppermage', short:'Hupp',   img:'https://api.dofusdb.fr/img/7382.png' },
+  { id:18, name:'Ouginak',    short:'Ougi',   img:'https://api.dofusdb.fr/img/7383.png' },
+  { id:20, name:'Forgelance', short:'Forge',  img:'https://api.dofusdb.fr/img/7384.png' },
+];
+
+const API = 'https://api.dofusdb.fr';
+
+// Cache des spells par breedId
+const spellCache = {};
+
+// État
+let activeBreeds = [];   // mode multi
+let activeBreed = null;  // mode single
+let mode = 'single';     // 'single' | 'multi'
+let activeFilters = new Set(['terre','feu','eau','air','invoc','util']);
+let searchQuery = '';
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  // Garde le logo
+  const logo = sb.querySelector('.sidebar-logo');
+  sb.innerHTML = '';
+  if (logo) sb.appendChild(logo);
+
+  BREEDS.forEach(breed => {
+    const btn = document.createElement('button');
+    btn.className = 'class-btn';
+    btn.title = breed.name;
+    btn.dataset.id = breed.id;
+
+    // Tente l'image, fallback sur initiales
+    btn.innerHTML = `
+      <img src="${breed.img}" alt="${breed.name}"
+        onerror="this.style.display='none';this.nextSibling.style.display='flex'"
+        style="display:block">
+      <span class="slot-emoji" style="display:none;font-size:16px;color:var(--gold);">${breed.short.slice(0,2)}</span>
+      <span class="class-label">${breed.short}</span>
+    `;
+    btn.addEventListener('click', () => onClassClick(breed));
+    sb.appendChild(btn);
+  });
+}
+
+// ─── INTERACTIONS ──────────────────────────────────────────────────────────────
+function onClassClick(breed) {
+  if (mode === 'single') {
+    activeBreed = breed;
+    // Update sidebar
+    document.querySelectorAll('.class-btn').forEach(b => {
+      b.classList.toggle('active', Number(b.dataset.id) === breed.id);
+    });
+    loadAndRenderSingle(breed);
+  } else {
+    // Mode multi : toggle
+    const idx = activeBreeds.findIndex(b => b.id === breed.id);
+    if (idx >= 0) {
+      activeBreeds.splice(idx, 1);
+    } else {
+      if (activeBreeds.length >= 6) {
+        // max 6 classes en multi
+        activeBreeds.shift();
+      }
+      activeBreeds.push(breed);
+    }
+    document.querySelectorAll('.class-btn').forEach(b => {
+      b.classList.toggle('active', activeBreeds.some(ab => ab.id === Number(b.dataset.id)));
+    });
+    if (activeBreeds.length === 0) {
+      showEmpty();
+    } else {
+      loadAndRenderMulti();
+    }
+  }
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+
+  if (m === 'single') {
+    // Reprend la première classe active si dispo
+    document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+    activeBreeds = [];
+    if (activeBreed) {
+      document.querySelector(`.class-btn[data-id="${activeBreed.id}"]`)?.classList.add('active');
+      loadAndRenderSingle(activeBreed);
+    } else {
+      showEmpty();
+    }
+  } else {
+    document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+    activeBreed = null;
+    showEmpty('Mode Multi actif — sélectionne jusqu\'à 6 classes (ex: team KTA 3v3)');
+  }
+}
+
+function toggleEl(btn) {
+  const el = btn.dataset.el;
+  if (activeFilters.has(el)) {
+    activeFilters.delete(el);
+    btn.classList.remove('active');
+  } else {
+    activeFilters.add(el);
+    btn.classList.add('active');
+  }
+  applyFilters();
+}
+
+function filterSpells() {
+  searchQuery = document.getElementById('searchBar').value.toLowerCase();
+  applyFilters();
+}
+
+function applyFilters() {
+  document.querySelectorAll('.spell-card').forEach(card => {
+    const elTags = card.dataset.elements?.split(',') || [];
+    const name = card.dataset.name?.toLowerCase() || '';
+
+    const elMatch = elTags.length === 0 || elTags.some(e => activeFilters.has(e));
+    const searchMatch = !searchQuery || name.includes(searchQuery);
+
+    card.style.display = (elMatch && searchMatch) ? '' : 'none';
+  });
+
+  // Masque sections vides en mode multi
+  document.querySelectorAll('.class-section').forEach(sec => {
+    const visible = [...sec.querySelectorAll('.spell-card')].some(c => c.style.display !== 'none');
+    sec.style.display = visible ? '' : 'none';
+  });
+}
+
+// ─── FETCH SPELLS ──────────────────────────────────────────────────────────────
+async function fetchSpells(breedId) {
+  if (spellCache[breedId]) return spellCache[breedId];
+
+  try {
+    // 1. Fetch le breed pour avoir les spellIds
+    const breedRes = await fetch(`${API}/breeds/${breedId}?lang=fr`);
+    const breed = await breedRes.json();
+
+    const spellIds = breed.spells || [];
+    if (!spellIds.length) return [];
+
+    // 2. Batch fetch les sorts
+    const idsParam = spellIds.map(id => `id[$in][]=${id}`).join('&');
+    const spellsRes = await fetch(`${API}/spells?${idsParam}&lang=fr&$limit=60`);
+    const spellsData = await spellsRes.json();
+    const spells = spellsData.data || [];
+
+    // 3. Fetch les spell-levels pour tous les sorts
+    const levelIds = spells.flatMap(s => s.spellLevels || []);
+    let levels = [];
+    if (levelIds.length > 0) {
+      // Batch par 50
+      const chunks = [];
+      for (let i = 0; i < levelIds.length; i += 50) chunks.push(levelIds.slice(i, i+50));
+      for (const chunk of chunks) {
+        const lp = chunk.map(id => `id[$in][]=${id}`).join('&');
+        const lr = await fetch(`${API}/spell-levels?${lp}&lang=fr&$limit=50`);
+        const ld = await lr.json();
+        levels.push(...(ld.data || []));
+      }
+    }
+    const levelMap = {};
+    levels.forEach(l => { levelMap[l.id] = l; });
+
+    // Attache le level max à chaque sort
+    spells.forEach(spell => {
+      const lastLevelId = spell.spellLevels?.[spell.spellLevels.length - 1];
+      spell._maxLevel = levelMap[lastLevelId] || null;
+    });
+
+    spellCache[breedId] = spells;
+    return spells;
+
+  } catch(e) {
+    console.error('fetchSpells error', e);
+    return [];
+  }
+}
+
+// ─── RENDER SINGLE ─────────────────────────────────────────────────────────────
+async function loadAndRenderSingle(breed) {
+  showUI(true);
+  document.getElementById('topbarTitle').textContent = breed.name;
+  document.getElementById('topbarSub').textContent = 'Chargement des sorts…';
+  showLoading();
+
+  const spells = await fetchSpells(breed.id);
+
+  document.getElementById('topbarSub').textContent = `${spells.length} sorts — cliquer pour détails`;
+
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  const grid = document.createElement('div');
+  grid.className = 'spells-grid';
+  spells.forEach(spell => grid.appendChild(buildSpellCard(spell)));
+  content.appendChild(grid);
+
+  applyFilters();
+}
+
+// ─── RENDER MULTI ──────────────────────────────────────────────────────────────
+async function loadAndRenderMulti() {
+  showUI(true);
+  const names = activeBreeds.map(b => b.name).join(' · ');
+  document.getElementById('topbarTitle').textContent = 'Multi — KTA 3v3';
+  document.getElementById('topbarSub').textContent = names;
+  showLoading();
+
+  // Fetch toutes en parallèle
+  await Promise.all(activeBreeds.map(b => fetchSpells(b.id)));
+
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  // Header multi
+  const header = document.createElement('div');
+  header.className = 'multiclass-header';
+  activeBreeds.forEach(b => {
+    const badge = document.createElement('div');
+    badge.className = 'multiclass-badge';
+    badge.innerHTML = `
+      <img src="${b.img}" onerror="this.style.display='none'" alt="">
+      <span class="mc-name">${b.name}</span>
+      <button class="mc-remove" onclick="removeFromMulti(${b.id})" title="Retirer">✕</button>
+    `;
+    header.appendChild(badge);
+  });
+  content.appendChild(header);
+
+  // Section par classe
+  activeBreeds.forEach(breed => {
+    const spells = spellCache[breed.id] || [];
+    const section = document.createElement('div');
+    section.className = 'class-section';
+    section.dataset.breedId = breed.id;
+
+    section.innerHTML = `
+      <div class="class-section-title">
+        <img src="${breed.img}" onerror="this.style.display='none'" alt="">
+        <h2>${breed.name}</h2>
+        <span class="spell-count">${spells.length} sorts</span>
+      </div>
+    `;
+    const grid = document.createElement('div');
+    grid.className = 'spells-grid';
+    spells.forEach(spell => grid.appendChild(buildSpellCard(spell)));
+    section.appendChild(grid);
+    content.appendChild(section);
+  });
+
+  applyFilters();
+}
+
+function removeFromMulti(breedId) {
+  activeBreeds = activeBreeds.filter(b => b.id !== breedId);
+  document.querySelector(`.class-btn[data-id="${breedId}"]`)?.classList.remove('active');
+  if (activeBreeds.length === 0) {
+    showEmpty('Mode Multi actif — sélectionne des classes');
+  } else {
+    loadAndRenderMulti();
+  }
+}
+
+// ─── BUILD SPELL CARD ──────────────────────────────────────────────────────────
+function buildSpellCard(spell) {
+  const lvl = spell._maxLevel;
+  const name = spell.name?.fr || spell.name || 'Inconnu';
+
+  // Détecter les éléments du sort
+  const elements = detectElements(spell, lvl);
+  const elementClasses = elements.map(e => `tag-${e}`);
+
+  // Extraire stats clés
+  const pa = lvl?.apCost ?? '?';
+  const poMin = lvl?.minRange ?? 1;
+  const poMax = lvl?.maxRange ?? '?';
+  const cc = lvl?.criticalHitProbability ?? null;
+
+  // Icon URL
+  const iconId = spell.iconId || spell.id;
+  const iconUrl = `https://api.dofusdb.fr/img/${iconId}.png`;
+
+  const card = document.createElement('div');
+  card.className = 'spell-card';
+  card.dataset.name = name.toLowerCase();
+  card.dataset.elements = elements.join(',');
+
+  card.innerHTML = `
+    <div class="spell-card-header" onclick="toggleCard(this.parentElement)">
+      <div class="spell-icon-wrap">
+        <img class="spell-icon" src="${iconUrl}"
+          onerror="this.style.display='none';this.nextSibling.style.display='flex'"
+          alt="${name}">
+        <div class="spell-icon-placeholder" style="display:none">✨</div>
+      </div>
+      <div class="spell-meta">
+        <div class="spell-name">${name}</div>
+        <div class="spell-tags">
+          ${elements.map(e => `<span class="tag tag-${e}">${elLabel(e)}</span>`).join('')}
+        </div>
+      </div>
+      <div class="spell-quick-stats">
+        <div class="qs-item">
+          <span class="qs-val pa">${pa}</span>
+          <span class="qs-label">PA</span>
+        </div>
+        <div class="qs-item">
+          <span class="qs-val po">${poMin === poMax ? poMax : poMin+'‑'+poMax}</span>
+          <span class="qs-label">PO</span>
+        </div>
+        ${cc ? `<div class="qs-item">
+          <span class="qs-val cc">${cc}%</span>
+          <span class="qs-label">CC</span>
+        </div>` : ''}
+      </div>
+      <span class="expand-arrow">▼</span>
+    </div>
+    <div class="spell-details">
+      ${buildDetails(spell, lvl)}
+    </div>
+  `;
+
+  return card;
+}
+
+function toggleCard(card) {
+  card.classList.toggle('expanded');
+}
+
+// ─── BUILD DETAILS ─────────────────────────────────────────────────────────────
+function buildDetails(spell, lvl) {
+  if (!lvl) return '<div style="padding:12px;color:var(--muted);font-size:12px">Détails non disponibles</div>';
+
+  const pa = lvl.apCost ?? '?';
+  const pm = lvl.movementPointsCost ?? 0;
+  const poMin = lvl.minRange ?? 1;
+  const poMax = lvl.maxRange ?? '?';
+  const cc = lvl.criticalHitProbability;
+  const los = lvl.castInLine !== undefined ? lvl.castInLine : null;
+  const lineOnly = lvl.castInLineToo || false;
+  const aoe = lvl.areaSize ?? 0;
+  const aoeType = lvl.areaShape ?? null;
+  const perTurn = lvl.maxCastPerTurn ?? 0;
+  const perTarget = lvl.maxCastPerTarget ?? 0;
+  const cooldown = lvl.minCastInterval ?? 0;
+  const modifRange = lvl.rangeCanBeBoosted ?? false;
+
+  // Stats grid
+  const stats = [
+    { val: pa, label: 'Coût PA', cls: 'highlight' },
+    pm > 0 ? { val: pm, label: 'Coût PM' } : null,
+    { val: poMin === poMax ? poMax : `${poMin}→${poMax}`, label: 'Portée' },
+    cc ? { val: cc + '%', label: 'Taux CC' } : null,
+    aoe > 0 ? { val: aoe + ' ' + aoeShape(aoeType), label: 'Zone' } : null,
+    perTurn > 0 ? { val: perTurn, label: '/tour' } : null,
+    cooldown > 0 ? { val: cooldown, label: 'Relance' } : null,
+    perTarget > 0 ? { val: perTarget, label: '/cible' } : null,
+    { val: los === false ? '⛔ Non' : '✓ Oui', label: 'Ligne de vue' },
+    modifRange ? { val: '✓', label: 'PO modif.' } : null,
+  ].filter(Boolean);
+
+  const statsHtml = `
+    <div class="detail-section">
+      <div class="detail-title">Statistiques</div>
+      <div class="stats-grid">
+        ${stats.map(s => `
+          <div class="stat-box">
+            <span class="stat-box-val ${s.cls||''}">${s.val}</span>
+            <span class="stat-box-label">${s.label}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // Effets normaux
+  const effects = lvl.effects || [];
+  const ccEffects = lvl.criticalEffects || [];
+
+  let effectsHtml = '';
+  if (effects.length > 0) {
+    effectsHtml += `
+      <div class="detail-section">
+        <div class="detail-title">Effets</div>
+        <div class="effects-list">
+          ${effects.map(e => buildEffectRow(e)).join('')}
+        </div>
+      </div>
+    `;
+  }
+  if (ccEffects.length > 0) {
+    effectsHtml += `
+      <div class="detail-section">
+        <div class="detail-title">⚡ Critique</div>
+        <div class="effects-list">
+          ${ccEffects.map(e => buildEffectRow(e, true)).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Variantes
+  const variants = spell.variants || [];
+  let variantsHtml = '';
+  if (variants.length > 0) {
+    variantsHtml = `
+      <div class="detail-section">
+        <div class="detail-title">Variantes (${variants.length})</div>
+        <div class="variants-row">
+          ${variants.map(v => {
+            const vname = v.name?.fr || v.name || '?';
+            const vicon = `https://api.dofusdb.fr/img/${v.iconId || v.id}.png`;
+            return `
+              <div class="variant-chip" title="${vname}">
+                <img src="${vicon}" onerror="this.style.display='none'" alt="">
+                <span class="v-name">${vname}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Description
+  const desc = spell.description?.fr || spell.description || '';
+  let descHtml = '';
+  if (desc) {
+    descHtml = `
+      <div class="detail-section">
+        <div class="detail-title">Description</div>
+        <div style="font-size:12px;color:var(--muted2);line-height:1.5;padding:6px 8px;background:var(--bg3);border-radius:5px">${desc}</div>
+      </div>
+    `;
+  }
+
+  return statsHtml + effectsHtml + variantsHtml + descHtml;
+}
+
+function buildEffectRow(effect, isCrit = false) {
+  const desc = effect.description?.fr || effect.description || effect.effect?.fr || '';
+  const min = effect.min ?? effect.value ?? '';
+  const max = effect.max ?? '';
+  const dmgStr = max && max !== min ? `${min}→${max}` : `${min}`;
+
+  // Détecter l'élément de l'effet
+  const el = detectEffectElement(desc);
+  const rowClass = el ? `dmg-${el}` : '';
+  const dmgClass = el || '';
+
+  return `
+    <div class="effect-row ${rowClass}">
+      <span class="effect-dmg ${dmgClass}">${dmgStr || '—'}</span>
+      <span class="effect-desc">${desc || 'Effet spécial'}</span>
+    </div>
+  `;
+}
+
+// ─── HELPERS ───────────────────────────────────────────────────────────────────
+function detectElements(spell, lvl) {
+  const els = new Set();
+  const effects = [...(lvl?.effects || []), ...(lvl?.criticalEffects || [])];
+
+  effects.forEach(e => {
+    const d = (e.description?.fr || e.description || '').toLowerCase();
+    const el = detectEffectElement(d);
+    if (el) els.add(el);
+  });
+
+  // Détection par nom de sort / catégorie
+  const name = (spell.name?.fr || '').toLowerCase();
+  if (name.includes('invoc') || name.includes('arbre') || name.includes('tofu') || name.includes('familier')) els.add('invoc');
+
+  // Si aucun élément de dommages → util
+  if (els.size === 0) els.add('util');
+
+  return [...els];
+}
+
+function detectEffectElement(desc) {
+  const d = desc.toLowerCase();
+  if (d.includes('terre') || d.includes('earth')) return 'terre';
+  if (d.includes('feu') || d.includes('fire')) return 'feu';
+  if (d.includes('eau') || d.includes('water')) return 'eau';
+  if (d.includes('air') || d.includes('wind') || d.includes('vent')) return 'air';
+  if (d.includes('neutre') || d.includes('neutral')) return 'neutre';
+  if (d.includes('soin') || d.includes('heal')) return 'soin';
+  return null;
+}
+
+function elLabel(el) {
+  const labels = { terre:'Terre', feu:'Feu', eau:'Eau', air:'Air', neutre:'Neutre', invoc:'Invoc', util:'Util', soin:'Soin' };
+  return labels[el] || el;
+}
+
+function aoeShape(shape) {
+  if (!shape) return '';
+  const map = { C:'cercle', L:'ligne', T:'T', X:'croix', Q:'carré', D:'diagonale' };
+  return map[shape] || shape;
+}
+
+// ─── UI HELPERS ────────────────────────────────────────────────────────────────
+function showEmpty(msg = 'Clique sur une classe pour afficher ses sorts') {
+  document.getElementById('content').innerHTML = `
+    <div class="empty-state">
+      <div class="big-icon">⚔️</div>
+      <h2>Encyclopédie Sorts</h2>
+      <p>${msg}</p>
+    </div>
+  `;
+}
+
+function showLoading() {
+  document.getElementById('content').innerHTML = `
+    <div class="loading-state">
+      <div class="loading-ring"></div>
+      <div class="loading-text">Chargement des sorts…</div>
+    </div>
+  `;
+}
+
+function showUI(show) {
+  document.getElementById('modeTabs').style.display = show ? '' : 'none';
+  document.getElementById('elFilters').style.display = show ? '' : 'none';
+  document.getElementById('searchBar').style.display = show ? '' : 'none';
+}
+
+// Init
+init();
+</script>
+</body>
+</html>
