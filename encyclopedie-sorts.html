@@ -275,7 +275,7 @@ body::before {
 /* ─── SPELL GRID ─────────────────────────────────── */
 .spells-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 12px;
 }
 
@@ -372,7 +372,7 @@ body::before {
 }
 .qs-val {
   font-family: 'Exo 2', sans-serif;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1;
 }
@@ -663,42 +663,120 @@ body::before {
   transition: all .2s;
 }
 .spell-pair:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
-.spell-pair.expanded { border-color: var(--gold-dim); box-shadow: 0 0 0 1px rgba(244,180,0,.15); }
+.spell-pair.expanded { border-color: var(--gold-dim); }
 
 .pair-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  align-items: stretch;
   cursor: pointer;
-}
-.pair-spells {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  min-width: 0;
+  position: relative;
+  min-height: 0;
 }
 
+/* Les deux halves côte à côte, même largeur */
 .spell-half {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 8px 7px;
+  text-align: center;
   min-width: 0;
+  border-top: 3px solid transparent;
 }
-.spell-half.variant {
-  padding-left: 8px;
-  opacity: .85;
-}
-.spell-half.variant:hover { opacity: 1; }
+.spell-half.main    { border-right: 1px solid var(--border); }
+.spell-half.variant { }
 
-.pair-divider {
-  font-size: 14px;
-  color: var(--border2);
-  padding: 0 8px;
+/* Bordure top par élément */
+.spell-half[data-el="terre"]  { border-top-color: #c8a060; }
+.spell-half[data-el="feu"]    { border-top-color: #ff6b35; }
+.spell-half[data-el="eau"]    { border-top-color: #4aa8d8; }
+.spell-half[data-el="air"]    { border-top-color: #a8d8a8; }
+.spell-half[data-el="neutre"] { border-top-color: #b0b0c8; }
+.spell-half[data-el="invoc"]  { border-top-color: #b06aff; }
+.spell-half[data-el="soin"]   { border-top-color: #39d98a; }
+.spell-half[data-el="util"]   { border-top-color: #3a4560; }
+
+/* Icône centrée */
+.spell-half .spell-icon {
+  width: 52px; height: 52px;
+  border-radius: 10px;
+  object-fit: contain;
+  image-rendering: auto;
+  border: 1px solid var(--border);
+  background: var(--bg3);
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.5));
 }
+
+/* Nom sous l'icône */
+.spell-half .spell-name {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  word-break: break-word;
+  hyphens: auto;
+}
+.spell-half.variant .spell-name { color: var(--gold); }
+.spell-lvl {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .5px;
+}
+.spell-lvl {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .5px;
+}
+
+/* Tags éléments */
+.spell-half .spell-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Stats PA/PO/CC en bas */
+.spell-half .spell-quick-stats {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+/* Divider central — flèche entre les deux */
+.pair-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  flex-shrink: 0;
+  background: var(--bg3);
+  border-right: 1px solid var(--border);
+}
+
+/* Flèche expand en bas à droite */
+.expand-arrow {
+  position: absolute;
+  bottom: 6px; right: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  transition: transform .2s;
+  pointer-events: none;
+}
+.spell-pair.expanded .expand-arrow { transform: rotate(180deg); }
 
 /* ─── DETAILS DOUBLE ─────────────────────────────── */
 .spell-details {
@@ -811,14 +889,7 @@ body::before {
           <button class="mode-tab active" data-mode="single" onclick="setMode('single')">Classe</button>
           <button class="mode-tab" data-mode="multi" onclick="setMode('multi')">Multi</button>
         </div>
-        <div class="el-filters" id="elFilters" style="display:none">
-          <button class="el-btn active" data-el="terre" title="Terre" onclick="toggleEl(this)">🟤</button>
-          <button class="el-btn active" data-el="feu"   title="Feu"   onclick="toggleEl(this)">🔴</button>
-          <button class="el-btn active" data-el="eau"   title="Eau"   onclick="toggleEl(this)">🔵</button>
-          <button class="el-btn active" data-el="air"   title="Air"   onclick="toggleEl(this)">⚪</button>
-          <button class="el-btn active" data-el="invoc" title="Invocations" onclick="toggleEl(this)">🟣</button>
-          <button class="el-btn active" data-el="util"  title="Utilitaires" onclick="toggleEl(this)">⭐</button>
-        </div>
+
         <input class="search-bar" id="searchBar" placeholder="🔍 Chercher un sort…" oninput="filterSpells()" style="display:none">
       </div>
     </div>
@@ -909,8 +980,9 @@ async function loadBreedIcons() {
       const btn = document.querySelector(`.class-btn[data-id="${b.id}"]`);
       if (!btn) return;
       const url = b.img || (b.iconId ? `${API}/img/${b.iconId}.png` : null);
-      const name = b.name?.fr || '';
-      if (url) btn.innerHTML = `<img src="${url}" alt="${name}" onerror="this.style.display='none'"><span class="class-label">${name.slice(0,5)}</span>`;
+      const breed = BREEDS.find(br => br.id === b.id);
+      const label = breed ? breed.short : (b.name?.fr || '').slice(0,5);
+      if (url) btn.innerHTML = `<img src="${url}" alt="${label}" onerror="this.style.display='none'"><span class="class-label">${label}</span>`;
     });
   } catch(e) {}
 }
@@ -937,25 +1009,31 @@ async function fetchBreed(breedId) {
   // Trier par order du sort principal
   pairs.sort((a, b) => (a.main.order||0) - (b.main.order||0));
 
-  // 3. Collecter tous les spellLevelIds nécessaires (dernier grade de chaque sort)
+  // 3. Collecter dernier grade (stats) + premier grade (niveau acquisition)
   const allSpells = pairs.flatMap(p => [p.main, p.variant].filter(Boolean));
-  const levelIds  = allSpells.flatMap(s => {
-    const ls = s.spellLevels || [];
-    return ls.length ? [ls[ls.length - 1]] : [];
-  });
-  const uniqueLevelIds = [...new Set(levelIds)];
+  const lastIds  = allSpells.flatMap(s => { const ls = s.spellLevels||[]; return ls.length ? [ls[ls.length-1]] : []; });
+  const firstIds = allSpells.flatMap(s => { const ls = s.spellLevels||[]; return ls.length ? [ls[0]] : []; });
+  const uniqueLevelIds = [...new Set([...lastIds, ...firstIds])];
 
   // 4. Batch fetch spell-levels
-  const levels = {};
+  const levels = {};       // spellId -> grade max (stats finales)
+  const firstLevels = {};  // spellId -> grade 1 (minPlayerLevel)
   for (let i = 0; i < uniqueLevelIds.length; i += 40) {
     const chunk = uniqueLevelIds.slice(i, i+40);
     const param = chunk.map(id => `id[$in][]=${id}`).join('&');
-    const rl = await fetch(`${API}/spell-levels?${param}&lang=fr&$limit=50`);
+    const rl = await fetch(`${API}/spell-levels?${param}&lang=fr&$limit=80`);
     const dl = await rl.json();
-    (dl.data||[]).forEach(lv => { levels[lv.spellId] = lv; });
+    (dl.data||[]).forEach(lv => {
+      // Premier grade du spell ?
+      const isFirst = allSpells.some(s => (s.spellLevels||[])[0] === lv.id);
+      if (isFirst) firstLevels[lv.spellId] = lv;
+      // Dernier grade du spell ?
+      const isLast = allSpells.some(s => { const ls = s.spellLevels||[]; return ls[ls.length-1] === lv.id; });
+      if (isLast) levels[lv.spellId] = lv;
+    });
   }
 
-  cache[breedId] = { pairs, levels };
+  cache[breedId] = { pairs, levels, firstLevels };
   return cache[breedId];
 }
 
@@ -1007,11 +1085,9 @@ function filterSpells() {
 
 function applyFilters() {
   document.querySelectorAll('.spell-pair').forEach(card => {
-    const els  = (card.dataset.elements||'').split(',').filter(Boolean);
     const name = card.dataset.name || '';
-    const elOk   = els.length === 0 || els.some(e => activeFilters.has(e));
     const srchOk = !searchQuery || name.includes(searchQuery);
-    card.style.display = elOk && srchOk ? '' : 'none';
+    card.style.display = srchOk ? '' : 'none';
   });
   document.querySelectorAll('.class-section').forEach(sec => {
     const vis = [...sec.querySelectorAll('.spell-pair')].some(c => c.style.display !== 'none');
@@ -1031,7 +1107,7 @@ async function loadAndRenderSingle(breed) {
   content.innerHTML = '';
   const grid = document.createElement('div');
   grid.className = 'spells-grid';
-  data.pairs.forEach(p => grid.appendChild(buildPairCard(p, data.levels)));
+  data.pairs.forEach(p => grid.appendChild(buildPairCard(p, data.levels, data.firstLevels)));
   content.appendChild(grid);
   applyFilters();
 }
@@ -1066,7 +1142,7 @@ async function loadAndRenderMulti() {
     </div>`;
     const grid = document.createElement('div');
     grid.className = 'spells-grid';
-    data.pairs.forEach(p => grid.appendChild(buildPairCard(p, data.levels)));
+    data.pairs.forEach(p => grid.appendChild(buildPairCard(p, data.levels, data.firstLevels)));
     sec.appendChild(grid);
     content.appendChild(sec);
   });
@@ -1080,12 +1156,15 @@ function removeFromMulti(breedId) {
 }
 
 // ─── PAIR CARD (sort + variante côte à côte) ──────────────────────────────────
-function buildPairCard(pair, levels) {
+function buildPairCard(pair, levels, firstLevels) {
+  firstLevels = firstLevels || {};
   const { main, variant } = pair;
-  const mainLvl = levels[main.id] || null;
-  const varLvl  = variant ? (levels[variant.id] || null) : null;
+  const mainLvl  = levels[main.id] || null;
+  const varLvl   = variant ? (levels[variant.id] || null) : null;
+  const mainFirst = firstLevels[main.id] || mainLvl;
+  const varFirst  = variant ? (firstLevels[variant.id] || varLvl) : null;
 
-  const elements = detectElements(mainLvl);
+  const elements = [...new Set([...detectElements(mainLvl), ...detectElements(varLvl)])];
   const allNames = [main.name?.fr, variant?.name?.fr].filter(Boolean).join(' / ').toLowerCase();
 
   const card = document.createElement('div');
@@ -1093,14 +1172,15 @@ function buildPairCard(pair, levels) {
   card.dataset.name     = allNames;
   card.dataset.elements = elements.join(',');
 
-  const mainHtml    = buildSpellHalf(main, mainLvl, 'main');
-  const variantHtml = variant
-    ? `<div class="pair-divider">⟷</div>${buildSpellHalf(variant, varLvl, 'variant')}`
-    : '';
+  const mainHtml    = buildSpellHalf(main, mainLvl, 'main', mainFirst);
+  const variantHtml = variant ? buildSpellHalf(variant, varLvl, 'variant', varFirst) : '';
 
+  const divider = variant ? `<div class="pair-divider">⟷</div>` : '';
   card.innerHTML = `
     <div class="pair-header" onclick="togglePair(this.parentElement)">
-      <div class="pair-spells">${mainHtml}${variantHtml}</div>
+      ${mainHtml}
+      ${divider}
+      ${variantHtml}
       <span class="expand-arrow">▼</span>
     </div>
     <div class="spell-details">
@@ -1110,24 +1190,23 @@ function buildPairCard(pair, levels) {
   return card;
 }
 
-function buildSpellHalf(spell, lvl, role) {
-  const name = spell.name?.fr || '?';
-  const icon = spell.img || `${API}/img/spells/sort_0.png`;
-  const pa   = lvl?.apCost ?? '?';
+function buildSpellHalf(spell, lvl, role, firstLvl) {
+  firstLvl = firstLvl || lvl;
+  const name  = spell.name?.fr || '?';
+  const icon  = spell.img || `${API}/img/spells/sort_0.png`;
+  const pa    = lvl?.apCost ?? '?';
   const poMin = lvl?.minRange ?? 1;
   const poMax = lvl?.range ?? '?';
-  const cc   = lvl?.criticalHitProbability || null;
+  const cc    = lvl?.criticalHitProbability || null;
   const poStr = (poMin <= 1 && poMax === 1) ? `${poMax}` : `${poMin}-${poMax}`;
   const elements = detectElements(lvl);
 
-  return `<div class="spell-half ${role}">
+  const mainEl = elements[0] || 'util';
+  const minLvl = firstLvl?.minPlayerLevel || null;
+  return `<div class="spell-half ${role}" data-el="${mainEl}">
     <img class="spell-icon" src="${icon}" alt="${name}" onerror="this.src='${API}/img/spells/sort_0.png'">
-    <div class="spell-meta">
-      <div class="spell-name">${name}</div>
-      <div class="spell-tags">
-        ${elements.map(e => `<span class="tag tag-${e}">${EL_LABEL[e]||e}</span>`).join('')}
-      </div>
-    </div>
+    <div class="spell-name" title="${name}">${name}</div>
+    ${minLvl ? `<div class="spell-lvl">Niv. ${minLvl}</div>` : ''}
     <div class="spell-quick-stats">
       <div class="qs-item"><span class="qs-val pa">${pa}</span><span class="qs-label">PA</span></div>
       <div class="qs-item"><span class="qs-val po">${poStr}</span><span class="qs-label">PO</span></div>
@@ -1184,8 +1263,8 @@ function buildSpellDetail(spell, lvl) {
 
   const effects   = lvl.effects || [];
   const ccEffects = lvl.criticalEffect || [];
-  const visibleFx   = effects.filter(e => e.visibleInTooltip !== false && e.diceNum > 0);
-  const visibleCCFx = ccEffects.filter(e => e.visibleInTooltip !== false && e.diceNum > 0);
+  const visibleFx   = effects.filter(e => e.visibleInTooltip === true && e.diceNum > 0 && EFFECT_NAMES[e.effectId]);
+  const visibleCCFx = ccEffects.filter(e => e.visibleInTooltip === true && e.diceNum > 0 && EFFECT_NAMES[e.effectId]);
 
   const desc = spell.description?.fr || '';
 
@@ -1228,11 +1307,16 @@ function detectElements(lvl) {
   const els = new Set();
   const allFx = [...(lvl.effects||[]), ...(lvl.criticalEffect||[])];
   allFx.forEach(fx => {
-    if ([100,97,101,91,96,105].includes(fx.effectId) && fx.diceNum > 0) {
-      const el = EL_MAP[fx.effectElement];
-      if (el) els.add(el);
+    // Dommages directs (visibleInTooltip + diceNum > 0)
+    const isDmg = [100,97,101,91,96,105].includes(fx.effectId);
+    if (isDmg && fx.diceNum > 0 && fx.visibleInTooltip !== false) {
+      // effectElement: 0=neutre,1=feu,2=eau,3=air,4=terre — -1 = pas de type visible
+      if (fx.effectElement >= 0) {
+        const el = EL_MAP[fx.effectElement];
+        if (el) els.add(el);
+      }
     }
-    if (fx.effectId === 81  && fx.diceNum > 0) els.add('soin');
+    if (fx.effectId === 81 && fx.diceNum > 0) els.add('soin');
     if (fx.effectId === 132) els.add('invoc');
   });
   if (els.size === 0) els.add('util');
@@ -1259,7 +1343,6 @@ function showLoading() {
 
 function showUI(show) {
   document.getElementById('modeTabs').style.display = show ? '' : 'none';
-  document.getElementById('elFilters').style.display = show ? '' : 'none';
   document.getElementById('searchBar').style.display = show ? '' : 'none';
 }
 
