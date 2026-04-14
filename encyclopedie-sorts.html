@@ -62,14 +62,14 @@ body::before {
 
 /* ─── SIDEBAR CLASSES ────────────────────────────── */
 .sidebar {
-  width: 110px;
+  width: 150px;
   background: var(--bg2);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 12px 8px;
-  gap: 5px;
+  gap: 3px;
   overflow-y: auto;
   flex-shrink: 0;
   scrollbar-width: none;
@@ -88,7 +88,7 @@ body::before {
 }
 
 .class-btn {
-  width: 94px;
+  width: 136px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg3);
@@ -96,7 +96,7 @@ body::before {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 7px 10px;
   transition: all .2s;
   flex-shrink: 0;
@@ -111,11 +111,12 @@ body::before {
   box-shadow: 0 0 10px rgba(244,180,0,.12);
 }
 .class-btn img {
-  width: 28px; height: 28px;
+  width: 32px; height: 32px;
   object-fit: contain;
-  image-rendering: pixelated;
-  border-radius: 4px;
+  image-rendering: auto;
+  border-radius: 6px;
   flex-shrink: 0;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.5));
 }
 .class-btn .class-label {
   font-family: 'Rajdhani', sans-serif;
@@ -140,7 +141,7 @@ body::before {
 
 /* ─── TOPBAR ─────────────────────────────────────── */
 .topbar {
-  padding: 14px 20px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--bg2);
   display: flex;
@@ -151,7 +152,7 @@ body::before {
 
 .topbar-title {
   font-family: 'Exo 2', sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--gold);
   letter-spacing: 1px;
@@ -168,6 +169,29 @@ body::before {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+.yt-link {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255,0,0,.1);
+  border: 1px solid rgba(255,0,0,.3);
+  border-radius: 6px;
+  color: #ff4444;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-decoration: none;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.yt-link:hover {
+  background: rgba(255,0,0,.2);
+  border-color: rgba(255,0,0,.6);
+  color: #ff6666;
 }
 
 /* Filtre élément */
@@ -220,7 +244,7 @@ body::before {
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 10px 14px;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -275,8 +299,8 @@ body::before {
 /* ─── SPELL GRID ─────────────────────────────────── */
 .spells-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 8px;
 }
 
 /* ─── SPELL CARD ─────────────────────────────────── */
@@ -372,7 +396,7 @@ body::before {
 }
 .qs-val {
   font-family: 'Exo 2', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1;
 }
@@ -680,8 +704,8 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 8px 8px 7px;
+  gap: 5px;
+  padding: 10px 8px 8px;
   text-align: center;
   min-width: 0;
   border-top: 3px solid transparent;
@@ -708,13 +732,13 @@ body::before {
   border: 1px solid var(--border);
   background: var(--bg3);
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 5px rgba(0,0,0,.5));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
 }
 
 /* Nom sous l'icône */
 .spell-half .spell-name {
   font-family: 'Exo 2', sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
@@ -884,6 +908,7 @@ body::before {
         <div class="topbar-title" id="topbarTitle">Encyclopédie Sorts</div>
         <div class="topbar-sub" id="topbarSub">Clique sur une classe pour afficher ses sorts</div>
       </div>
+      <a href="https://www.youtube.com/@Tenmalexis" target="_blank" class="yt-link">▶ @Tenmalexis</a>
       <div class="topbar-right">
         <div class="mode-tabs" id="modeTabs" style="display:none">
           <button class="mode-tab active" data-mode="single" onclick="setMode('single')">Classe</button>
@@ -981,7 +1006,7 @@ async function loadBreedIcons() {
       if (!btn) return;
       const url = b.img || (b.iconId ? `${API}/img/${b.iconId}.png` : null);
       const breed = BREEDS.find(br => br.id === b.id);
-      const label = breed ? breed.short : (b.name?.fr || '').slice(0,5);
+      const label = b.name?.fr || (breed ? breed.name : '');
       if (url) btn.innerHTML = `<img src="${url}" alt="${label}" onerror="this.style.display='none'"><span class="class-label">${label}</span>`;
     });
   } catch(e) {}
