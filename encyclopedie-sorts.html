@@ -62,14 +62,14 @@ body::before {
 
 /* ─── SIDEBAR CLASSES ────────────────────────────── */
 .sidebar {
-  width: 72px;
+  width: 110px;
   background: var(--bg2);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0;
-  gap: 4px;
+  padding: 12px 8px;
+  gap: 5px;
   overflow-y: auto;
   flex-shrink: 0;
   scrollbar-width: none;
@@ -83,49 +83,49 @@ body::before {
   color: var(--gold);
   letter-spacing: 2px;
   text-transform: uppercase;
-  writing-mode: vertical-rl;
-  margin-bottom: 8px;
-  opacity: .6;
+  margin-bottom: 6px;
+  opacity: .5;
 }
 
 .class-btn {
-  width: 52px; height: 52px;
-  border-radius: 10px;
-  border: 2px solid transparent;
+  width: 94px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
   background: var(--bg3);
   cursor: pointer;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 2px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
   transition: all .2s;
-  position: relative;
-  overflow: hidden;
   flex-shrink: 0;
 }
 .class-btn:hover {
   border-color: var(--border2);
   background: var(--bg4);
-  transform: translateX(2px);
 }
 .class-btn.active {
   border-color: var(--gold);
   background: rgba(244,180,0,.08);
-  box-shadow: 0 0 12px rgba(244,180,0,.15), inset 0 0 12px rgba(244,180,0,.04);
+  box-shadow: 0 0 10px rgba(244,180,0,.12);
 }
 .class-btn img {
-  width: 32px; height: 32px;
+  width: 28px; height: 28px;
   object-fit: contain;
   image-rendering: pixelated;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 .class-btn .class-label {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .5px;
+  letter-spacing: .4px;
   text-transform: uppercase;
   color: var(--muted);
   line-height: 1;
+  white-space: nowrap;
 }
 .class-btn.active .class-label { color: var(--gold); }
 
@@ -859,47 +859,54 @@ async function fetchSpells(breedId) {
   if (spellCache[breedId]) return spellCache[breedId];
 
   try {
-    // 1. Fetch le breed pour avoir les spellIds
-    const breedRes = await fetch(`${API}/breeds/${breedId}?lang=fr`);
-    const breed = await breedRes.json();
+    // 1. Fetch sorts directement par breedId
+    const r1 = await fetch(`${API}/spells?breedId=${breedId}&lang=fr&$limit=100`);
+    const d1 = await r1.json();
+    let spells = d1.data || [];
 
-    const spellIds = breed.spells || [];
-    if (!spellIds.length) return [];
-
-    // 2. Batch fetch les sorts
-    const idsParam = spellIds.map(id => `id[$in][]=${id}`).join('&');
-    const spellsRes = await fetch(`${API}/spells?${idsParam}&lang=fr&$limit=60`);
-    const spellsData = await spellsRes.json();
-    const spells = spellsData.data || [];
-
-    // 3. Fetch les spell-levels pour tous les sorts
-    const levelIds = spells.flatMap(s => s.spellLevels || []);
-    let levels = [];
-    if (levelIds.length > 0) {
-      // Batch par 50
-      const chunks = [];
-      for (let i = 0; i < levelIds.length; i += 50) chunks.push(levelIds.slice(i, i+50));
-      for (const chunk of chunks) {
-        const lp = chunk.map(id => `id[$in][]=${id}`).join('&');
-        const lr = await fetch(`${API}/spell-levels?${lp}&lang=fr&$limit=50`);
-        const ld = await lr.json();
-        levels.push(...(ld.data || []));
+    // Fallback via breeds endpoint
+    if (!spells.length) {
+      const rb = await fetch(`${API}/breeds/${breedId}?lang=fr`);
+      const db = await rb.json();
+      const spellIds = db.spells || db.spellIds || [];
+      if (spellIds.length) {
+        const idsParam = spellIds.map(id => `id[$in][]=${id}`).join('&');
+        const r2 = await fetch(`${API}/spells?${idsParam}&lang=fr&$limit=100`);
+        const d2 = await r2.json();
+        spells = d2.data || [];
       }
     }
+
+    if (!spells.length) { spellCache[breedId] = []; return []; }
+
+    // 2. Fetch uniquement le dernier spell-level (niveau max) de chaque sort
+    const lastLevelIds = spells
+      .map(s => { const ls = s.spellLevels || []; return ls[ls.length - 1] || null; })
+      .filter(Boolean);
+
+    let levels = [];
+    for (let i = 0; i < lastLevelIds.length; i += 40) {
+      const chunk = lastLevelIds.slice(i, i+40);
+      const lp = chunk.map(id => `id[$in][]=${id}`).join('&');
+      const lr = await fetch(`${API}/spell-levels?${lp}&lang=fr&$limit=50`);
+      const ld = await lr.json();
+      levels.push(...(ld.data || []));
+    }
+
     const levelMap = {};
     levels.forEach(l => { levelMap[l.id] = l; });
 
-    // Attache le level max à chaque sort
     spells.forEach(spell => {
-      const lastLevelId = spell.spellLevels?.[spell.spellLevels.length - 1];
-      spell._maxLevel = levelMap[lastLevelId] || null;
+      const ls = spell.spellLevels || [];
+      spell._maxLevel = levelMap[ls[ls.length - 1]] || null;
     });
 
     spellCache[breedId] = spells;
     return spells;
 
   } catch(e) {
-    console.error('fetchSpells error', e);
+    console.error('fetchSpells breedId=' + breedId, e);
+    spellCache[breedId] = [];
     return [];
   }
 }
